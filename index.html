@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Journal de Bord — Pro</title>
+
+  <!-- PWA : installation sur téléphone -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#7c4dff" />
+
+  <!-- Icônes -->
+  <link rel="icon" type="image/png" href="fox.png" />
+  <link rel="apple-touch-icon" href="fox.png" />
+
+  <!-- iOS : mode app plein écran -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Journal de Bord" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ─── HEADER ─────────────────────────────────────── -->
+  <div class="card header">
+    <div class="logo-title">
+      <div class="logo-ring">
+        <img class="logo-img" src="fox.png" alt="Logo" />
+      </div>
+      <div>
+        <h1 class="title">Journal de Bord</h1>
+        <div class="subtitle" id="headerDate">Chargement…</div>
+      </div>
+    </div>
+
+    <!-- Barre de progression de la journée -->
+    <div class="day-progress-wrap" id="dayProgressWrap">
+      <div class="day-progress-label">Journée en cours</div>
+      <div class="day-progress-bar">
+        <div class="day-progress-fill" id="dayProgressFill" style="width:0%"></div>
+      </div>
+      <div class="day-progress-time" id="dayProgressTime">--:-- / --:--</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tabs-nav">
+        <button id="tab-login"    class="tab active">🔐 <span>Connexion</span></button>
+        <button id="tab-journal"  class="tab">📔 <span>Journal</span></button>
+        <button id="tab-pointage" class="tab">🕒 <span>Pointage</span></button>
+        <button id="tab-gantt"    class="tab">📈 <span>Gantt</span></button>
+        <button id="tab-dashboard" class="tab">📊 <span>Dashboard</span></button>
+        <button id="tab-admin"    class="tab">⚙️ <span>Admin</span></button>
+      </div>
+
+      <div class="tabs-actions">
+        <button id="themeToggleBtn" class="icon-btn" title="Changer de thème">🌙</button>
+
+        <div id="userMenu" class="user-chip hidden">
+          <span class="user-avatar" id="userAvatar"></span>
+          <span class="user-name" id="userName"></span>
+          <button id="logoutBtn" class="icon-btn icon-btn-danger" title="Déconnexion">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── BANNIÈRE TÂCHE EN COURS ───────────────────────── -->
+  <div id="liveBanner" class="live-banner hidden">
+    <span class="live-dot"></span>
+    <span class="live-banner-text" id="liveBannerText"></span>
+    <span class="live-banner-clock" id="liveBannerClock">00:00:00</span>
+    <button id="liveBannerStop" class="btn-ghost">⏹ Terminer</button>
+  </div>
+
+  <!-- ─── LOGIN ───────────────────────────────────────── -->
+  <section id="view-login" class="card login-card">
+    <div class="login-hero">
+      <div class="login-logo-ring">
+        <img src="fox.png" alt="Logo" class="login-logo-img" />
+      </div>
+      <h2 class="login-title">Bon retour 👋</h2>
+      <p class="subtitle" style="margin-bottom:0;">Connectez-vous pour accéder à votre journal de bord</p>
+    </div>
+
+    <div class="login-form">
+      <div class="input-icon-wrap">
+        <span class="input-icon">👤</span>
+        <input id="loginUser" placeholder="Nom d'utilisateur" autocomplete="username" />
+      </div>
+      <div class="input-icon-wrap">
+        <span class="input-icon">🔒</span>
+        <input id="loginPass" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+        <button type="button" id="togglePassBtn" class="input-icon-btn" title="Afficher / masquer">👁️</button>
+      </div>
+      <button id="loginBtn" class="login-submit">Se connecter →</button>
+    </div>
+
+    <p class="small-hint" style="text-align:center;">Identifiants modifiables dans Admin.</p>
+  </section>
+
+  <!-- ─── JOURNAL ─────────────────────────────────────── -->
+  <section id="view-journal" class="card hidden">
+    <h2>Journal de Bord</h2>
+    <p class="subtitle">Enregistrez vos activités au fil de la journée</p>
+
+    <!-- Suivi en direct ─ démarrer / terminer une tâche -->
+    <div class="tracker-card">
+      <div id="trackerIdle">
+        <div class="tracker-mode-label">⏱️ Suivi en direct <span class="small-hint" style="margin:0;">(ou utilisez la saisie manuelle ci-dessous)</span></div>
+        <div class="row">
+          <input id="trackerTaskText" placeholder="Nom de la tâche en cours…" class="grow" style="flex:2 1 220px;" />
+          <select id="trackerCat" class="grow" style="flex:.8 1 150px;"></select>
+          <button id="trackerStartBtn">▶️ Démarrer tâche</button>
+        </div>
+      </div>
+      <div id="trackerActive" class="tracker-active-row hidden">
+        <div>
+          <div class="tracker-label" id="trackerStateLabel">Tâche en cours</div>
+          <div class="tracker-task-name" id="trackerTaskName"></div>
+        </div>
+        <div class="tracker-timer" id="trackerTimer">00:00:00</div>
+        <div class="tracker-actions">
+          <button id="trackerPauseBtn" class="btn-ghost">⏸ Pause</button>
+          <button id="trackerStopBtn" class="btn-danger">⏹ Terminer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+    <p class="small-hint" style="margin-top:0;">Saisie manuelle</p>
+
+    <div class="row">
+      <input type="date"  id="taskDate"  class="grow" />
+      <input              id="taskTime"  placeholder="08:30-10:00" class="grow" style="flex:.6 1 120px;" />
+      <input              id="taskText"  placeholder="Description de la tâche…" class="grow" style="flex:2 1 260px;" />
+      <select             id="taskCat"   class="grow" style="flex:.8 1 140px;"></select>
+      <select id="taskPriority" class="grow" style="flex:.5 1 110px;">
+        <option value="Moyenne">⚪ Priorité moy.</option>
+        <option value="Haute">🔴 Priorité haute</option>
+        <option value="Basse">🟢 Priorité basse</option>
+      </select>
+      <select id="taskStatus" class="grow" style="flex:.5 1 120px;">
+        <option value="À faire">📍 À faire</option>
+        <option value="En cours">🔄 En cours</option>
+        <option value="Terminé">✅ Terminé</option>
+      </select>
+      <button id="addTaskBtn">➕ Ajouter</button>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <textarea id="taskNotes" rows="1" class="grow" placeholder="📝 Note détaillée (optionnel)…" style="flex:1 1 100%;"></textarea>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <input id="newCat" placeholder="Nouvelle catégorie…" class="grow" style="flex:.8 1 180px;" />
+      <button id="addCatBtn" class="btn-ghost">🏷 Ajouter catégorie</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Recherche & filtres -->
+    <div class="row" style="margin-bottom:6px;">
+      <input id="searchText" placeholder="🔍 Rechercher dans les tâches…" class="grow" style="flex:1.6 1 220px;" />
+      <select id="filterCat" class="grow" style="flex:.7 1 150px;"><option value="">Toutes catégories</option></select>
+      <input type="date" id="filterFrom" class="grow" style="flex:.5 1 130px;" title="Du" />
+      <input type="date" id="filterTo"   class="grow" style="flex:.5 1 130px;" title="Au" />
+      <button id="clearFiltersBtn" class="btn-ghost">✕ Effacer</button>
+    </div>
+
+    <div class="flex-row" style="justify-content:space-between;">
+      <label class="flex-row" style="gap:8px; font-size:.82rem; color:var(--text-3);">
+        Tri
+        <select id="sortOrder" style="width:auto;">
+          <option value="desc">Récents d'abord</option>
+          <option value="asc">Anciens d'abord</option>
+        </select>
+      </label>
+      <div class="section-actions">
+        <button id="toggleRapportBtn" class="btn-ghost">📑 Rapport alternance</button>
+        <button id="exportJournalPdfBtn" class="btn-ghost">📄 Export PDF</button>
+        <button id="exportJournalExcelBtn" class="btn-ghost">📊 Export Excel</button>
+      </div>
+    </div>
+
+    <!-- Panneau Rapport alternance -->
+    <div id="rapportPanel" class="hidden" style="margin-top:14px; padding:16px; border:1px solid var(--line); border-radius:var(--r-md); background:rgba(255,255,255,.02);">
+      <h3 style="margin-top:0;">📑 Générer un rapport d'alternance (PDF stylé)</h3>
+      <div class="row" style="margin-bottom:10px;">
+        <select id="rapportPreset" class="grow" style="flex:.6 1 160px;">
+          <option value="week">Semaine en cours</option>
+          <option value="month">Mois en cours</option>
+          <option value="custom">Période personnalisée</option>
+        </select>
+        <input type="date" id="rapportFrom" class="grow" style="flex:.5 1 140px;" />
+        <input type="date" id="rapportTo"   class="grow" style="flex:.5 1 140px;" />
+      </div>
+      <label class="small-hint" style="display:block;margin-bottom:6px;">Missions / contexte (apparaît en intro du rapport)</label>
+      <textarea id="rapportMissions" rows="2" style="width:100%;margin-bottom:10px;" placeholder="Ex: Intégration au service Méthodes, suivi des lignes de production…"></textarea>
+      <label class="small-hint" style="display:block;margin-bottom:6px;">Compétences acquises / Bilan</label>
+      <textarea id="rapportBilan" rows="3" style="width:100%;margin-bottom:12px;" placeholder="Ex: Autonomie sur l'analyse de process, maîtrise d'Excel avancé…"></textarea>
+      <button id="generateRapportBtn">📄 Générer le PDF</button>
+    </div>
+
+    <!-- Stats rapides journal -->
+    <div id="journalStats" class="kpi-row" style="margin-top:16px;"></div>
+
+    <div id="journalRoot"></div>
+  </section>
+
+  <!-- ─── POINTAGE ────────────────────────────────────── -->
+  <section id="view-pointage" class="card hidden">
+    <h2>Pointage journalier</h2>
+    <p class="subtitle">Enregistrez vos heures de travail</p>
+
+    <div class="row">
+      <input type="date" id="pDate" class="grow" style="flex:.6 1 140px;" />
+      <input id="pArr"  class="grow" placeholder="Arrivée 08:00" />
+      <input id="pPD"   class="grow" placeholder="Pause début 12:00" />
+      <input id="pPF"   class="grow" placeholder="Pause fin 13:00" />
+      <input id="pDep"  class="grow" placeholder="Départ 17:00" />
+      <button id="savePointBtn">💾 Enregistrer</button>
+    </div>
+
+    <p class="small-hint">Calcul : (Pause début − Arrivée) + (Départ − Pause fin) − 20 min de tolérance</p>
+    <p class="small-hint">Les week-ends sont masqués des tableaux. Les jours fériés (calendrier français) sont repérés 🎌 et exclus de l'objectif.</p>
+
+    <!-- KPI semaine -->
+    <div id="weekKPI" class="kpi-row" style="margin-top:20px;"></div>
+
+    <div class="sep"></div>
+
+    <h3>Semaine</h3>
+    <div class="flex-row" style="margin-bottom:10px;">
+      <input type="date" id="weekRef" class="grow" style="flex:.5 1 140px;" />
+      <button id="prevWeek"     class="btn-ghost">⬅ -1</button>
+      <button id="nextWeek"     class="btn-ghost">+1 ➡</button>
+      <button id="exportWeekPdf"   class="btn-ghost">📄 PDF</button>
+      <button id="exportWeekExcel" class="btn-ghost">📊 Excel</button>
+    </div>
+    <table id="weekTable" class="table"></table>
+
+    <div class="sep"></div>
+
+    <h3>Mois</h3>
+    <div class="flex-row" style="margin-bottom:10px;">
+      <input type="month" id="monthRef" class="grow" style="flex:.5 1 140px;" />
+      <button id="prevMonth"      class="btn-ghost">⬅ -1</button>
+      <button id="nextMonth"      class="btn-ghost">+1 ➡</button>
+      <button id="exportMonthPdf"   class="btn-ghost">📄 PDF</button>
+      <button id="exportMonthExcel" class="btn-ghost">📊 Excel</button>
+    </div>
+    <div id="monthKPI" class="kpi-row" style="margin-bottom:14px;"></div>
+    <table id="monthTable" class="table"></table>
+  </section>
+
+  <!-- ─── GANTT ───────────────────────────────────────── -->
+  <section id="view-gantt" class="card hidden">
+    <h2>Diagramme de Gantt</h2>
+    <p class="subtitle">Visualisation temporelle de vos activités</p>
+
+    <div class="flex-row" style="margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+      <select id="gPreset" style="width:auto;">
+        <option value="week">Semaine</option>
+        <option value="month">Mois</option>
+        <option value="custom">Personnalisée</option>
+      </select>
+
+      <input type="date" id="gStart" />
+      <input type="date" id="gEnd"   />
+
+      <div class="flex-row" style="gap:6px;">
+        <button id="gPrevWeek"  class="btn-ghost">⬅ Sem -1</button>
+        <button id="gNextWeek"  class="btn-ghost">Sem +1 ➡</button>
+        <button id="gPrevMonth" class="btn-ghost">⬅ Mois -1</button>
+        <button id="gNextMonth" class="btn-ghost">Mois +1 ➡</button>
+      </div>
+
+      <button id="exportGanttPdf"   class="btn-ghost">📄 PDF</button>
+      <button id="exportGanttPng"   class="btn-ghost">🖼 PNG</button>
+      <button id="exportGanttExcel" class="btn-ghost">📊 Excel</button>
+    </div>
+
+    <div id="ganttWrap">
+      <canvas id="ganttCanvas" width="1800" height="600"></canvas>
+      <div id="ganttTooltip" style="position:absolute; pointer-events:none; display:none; z-index:5;"></div>
+    </div>
+
+    <div id="ganttAnalytics">
+      <canvas id="ganttCatCanvas" width="340" height="260"></canvas>
+      <div id="ganttCatLegend"></div>
+    </div>
+  </section>
+
+  <!-- ─── DASHBOARD ───────────────────────────────────── -->
+  <section id="view-dashboard" class="card hidden">
+    <h2>Dashboard</h2>
+    <p class="subtitle">Vue d'ensemble de votre activité</p>
+
+    <div class="flex-row" style="margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+      <select id="dPreset" style="width:auto;">
+        <option value="week">Semaine en cours</option>
+        <option value="month">Mois en cours</option>
+        <option value="all">Toute la période</option>
+        <option value="custom">Personnalisée</option>
+      </select>
+      <input type="date" id="dStart" />
+      <input type="date" id="dEnd"   />
+    </div>
+
+    <div id="dashboardKPI" class="kpi-row" style="margin-bottom:18px;"></div>
+
+    <div id="dashboardCharts">
+      <div class="dash-chart-box">
+        <h3 style="margin-top:0;">Répartition par catégorie</h3>
+        <canvas id="dashCatCanvas" width="340" height="260"></canvas>
+        <div id="dashCatLegend"></div>
+      </div>
+      <div class="dash-chart-box" style="flex:1.6 1 420px;">
+        <h3 style="margin-top:0;">Temps par jour</h3>
+        <canvas id="dashBarCanvas" width="600" height="260"></canvas>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <h3>Comparaison semaine actuelle vs précédente</h3>
+    <div id="dashCompareKPI" class="kpi-row"></div>
+  </section>
+
+  <!-- ─── ADMIN ───────────────────────────────────────── -->
+  <section id="view-admin" class="card hidden">
+    <h2>Administration</h2>
+    <p class="subtitle">Gestion des accès et sauvegarde</p>
+
+    <p id="backupStatus" class="small-hint"></p>
+
+    <div id="backupBanner">
+      <span>Autorisation requise pour la sauvegarde automatique.</span>
+      <button id="reauthBackupBtn" class="btn-ghost">🔐 Autoriser</button>
+    </div>
+
+    <div class="section-actions" style="margin-top:12px;">
+      <button id="chooseBackupFileBtn"   class="btn-ghost">📁 Choisir fichier</button>
+      <button id="restoreFromBackupBtn"  class="btn-ghost">🔄 Restaurer</button>
+      <button id="exportBackupBtn"       class="btn-ghost">💾 Sauvegarder</button>
+      <button id="importBackupBtn"       class="btn-ghost">📤 Importer</button>
+    </div>
+
+    <input id="backupFileInput" type="file" accept="application/json" style="display:none" />
+
+    <h3>Identifiants</h3>
+    <div class="row">
+      <input id="admUser" class="grow" placeholder="Nom d'utilisateur" autocomplete="off" />
+      <input id="admPass" class="grow" type="password" placeholder="Mot de passe" autocomplete="off" />
+      <button id="saveCredsBtn">💾 Enregistrer</button>
+      <button id="resetCredsBtn" class="btn-ghost">↩ Réinitialiser</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <h3>Horaires de la journée</h3>
+    <p class="small-hint" style="margin-top:-6px;">Utilisés pour la barre de progression en haut à droite.</p>
+    <div class="row">
+      <input type="time" id="admWorkStart" class="grow" style="flex:.4 1 120px;" />
+      <input type="time" id="admWorkEnd"   class="grow" style="flex:.4 1 120px;" />
+      <button id="saveWorkHoursBtn">💾 Enregistrer</button>
+      <button id="resetWorkHoursBtn" class="btn-ghost">↩ Réinitialiser (08:00–18:00)</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <h3>Rémunération</h3>
+    <p class="small-hint" style="margin-top:-6px;">Taux horaire utilisé pour calculer la rémunération dans Pointage.</p>
+    <div class="row">
+      <input type="number" id="admHourlyRate" class="grow" style="flex:.4 1 140px;" min="0" step="0.01" placeholder="Ex : 11.65" />
+      <select id="admCurrency" class="grow" style="flex:.3 1 100px;">
+        <option value="€">€ Euro</option>
+        <option value="$">$ Dollar</option>
+        <option value="£">£ Livre</option>
+        <option value="CHF">CHF</option>
+      </select>
+      <button id="saveRateBtn">💾 Enregistrer</button>
+      <button id="resetRateBtn" class="btn-ghost">↩ Désactiver</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <h3>Catégories</h3>
+    <div id="admCats" class="category-list"></div>
+    <p class="small-hint" style="margin-top:8px;">La catégorie « Général » est permanente.</p>
+  </section>
+
+  <p class="footer">Données stockées localement — aucun transfert réseau</p>
+</div>
+
+<!-- Bouton flottant ajout rapide -->
+<button id="fabAddTask" class="fab hidden" title="Ajout rapide">➕</button>
+
+<!-- Toasts -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

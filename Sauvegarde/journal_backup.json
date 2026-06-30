@@ -1,0 +1,1742 @@
+{
+  "creds": {
+    "username": "CRANCE",
+    "password": "4455"
+  },
+  "cats": [
+    "Général",
+    "Réunion",
+    "Réorganisation NEF2",
+    "Chemin piéton",
+    "Modélisation navire",
+    "Terrain",
+    "Calcul de charge"
+  ],
+  "journal": {
+    "2026-03-19": [
+      {
+        "id": 31901,
+        "timeRange": "08:00-12:40",
+        "text": "Données fournisseurs",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 31902,
+        "timeRange": "13:20-16:00",
+        "text": "Matrice déplacement prépa",
+        "cat": "Général"
+      }
+    ],
+    "2026-03-18": [
+      {
+        "id": 31801,
+        "timeRange": "07:30-13:00",
+        "text": "Données fournisseurs",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 31802,
+        "timeRange": "13:40-15:30",
+        "text": "Données fournisseurs",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-03-17": [
+      {
+        "id": 31701,
+        "timeRange": "07:30-13:00",
+        "text": "Données fournisseurs",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 31702,
+        "timeRange": "13:40-15:30",
+        "text": "Données fournisseurs",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-03-16": [
+      {
+        "id": 11601,
+        "timeRange": "13:40-15:30",
+        "text": "Outil calcul performance",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 11602,
+        "timeRange": "07:30-13:00",
+        "text": "Données fournisseurs",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-03-13": [
+      {
+        "id": 11301,
+        "timeRange": "07:30-12:50",
+        "text": "Matrice déplacement prépa",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 11302,
+        "timeRange": "13:30-15:30",
+        "text": "Analyse données fournisseurs",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-03-12": [
+      {
+        "id": 11204,
+        "timeRange": "09:00-13:00",
+        "text": "Matrice déplacement prépa",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 11201,
+        "timeRange": "13:40-15:00",
+        "text": "Matrice déplacement prépa",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 11202,
+        "timeRange": "15:00-16:00",
+        "text": "Visite parc tuyau (logistiport)",
+        "cat": "Général"
+      },
+      {
+        "id": 11203,
+        "timeRange": "16:00-17:00",
+        "text": "Rapport d'avancement tuteur enseignant",
+        "cat": "Général"
+      }
+    ],
+    "2026-03-11": [
+      {
+        "id": 11101,
+        "timeRange": "07:30-13:00",
+        "text": "Etude du plan palettier actuel",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 11102,
+        "timeRange": "13:40-15:30",
+        "text": "Définition paramètres d'espace pour l'outils de calcul de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-10": [
+      {
+        "id": 11003,
+        "timeRange": "07:30-08:30",
+        "text": "Révision rapport chemin picking",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 11001,
+        "timeRange": "08:30-11:00",
+        "text": "Cahier des charge Réorga NEF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 11002,
+        "timeRange": "11:00-12:50",
+        "text": "Récupération de données pour CDC",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 11004,
+        "timeRange": "13:30-14:00",
+        "text": "Ajustement rapport chemin picking",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 11005,
+        "timeRange": "14:00-15:30",
+        "text": "Plan palettier codifié",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-09": [
+      {
+        "id": 10901,
+        "timeRange": "07:30-12:50",
+        "text": "Rapport réimplantation chemin piéton",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 10902,
+        "timeRange": "13:30-15:30",
+        "text": "Extension outil calcul productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-06": [
+      {
+        "id": 10604,
+        "timeRange": "07:30-09:00",
+        "text": "Rédaction réimplantation chemin piéton",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 10603,
+        "timeRange": "10:00-11:00",
+        "text": "Atelier résolution de problème",
+        "cat": "Général"
+      },
+      {
+        "id": 10602,
+        "timeRange": "11:00-12:50",
+        "text": "Rendu 3D réimplantation",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 10601,
+        "timeRange": "13:30-15:30",
+        "text": "Rapport d'avancement réimplantation",
+        "cat": "Chemin piéton"
+      }
+    ],
+    "2026-03-05": [
+      {
+        "id": 10501,
+        "timeRange": "07:30-13:00",
+        "text": "Rédaction réimplantation chemin",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 10502,
+        "timeRange": "13:40-15:30",
+        "text": "Rédaction réimplantation chemin",
+        "cat": "Chemin piéton"
+      }
+    ],
+    "2026-03-04": [
+      {
+        "id": 10401,
+        "timeRange": "07:30-10:30",
+        "text": "Définition chemin piéton",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 10405,
+        "timeRange": "11:00-12:30",
+        "text": "Définition chemin piéton",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 10404,
+        "timeRange": "13:10-15:00",
+        "text": "Définition chemin piéton",
+        "cat": "Chemin piéton"
+      },
+      {
+        "id": 10402,
+        "timeRange": "10:30-11:00",
+        "text": "Réunion POKE NEF2",
+        "cat": "Réunion"
+      },
+      {
+        "id": 10403,
+        "timeRange": "15:00-17:00",
+        "text": "Présentation POKE NEF2",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-03": [
+      {
+        "id": 10301,
+        "timeRange": "07:30-11:00",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 10302,
+        "timeRange": "11:00-12:00",
+        "text": "Réunion poke NEF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 10303,
+        "timeRange": "12:00-13:00",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 10304,
+        "timeRange": "13:40-15:30",
+        "text": "Préparation POKE NEF2",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-02": [
+      {
+        "id": 10201,
+        "timeRange": "07:30-13:00",
+        "text": "Création KPI",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 10202,
+        "timeRange": "13:00-15:30",
+        "text": "Création KPI",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-02-27": [
+      {
+        "id": 22703,
+        "timeRange": "07:30-09:00",
+        "text": "Cartographie temporel NEF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 22701,
+        "timeRange": "09:00-10:00",
+        "text": "Réunion avancement NEF2",
+        "cat": "Réunion"
+      },
+      {
+        "id": 22704,
+        "timeRange": "10:00-12:40",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 22705,
+        "timeRange": "13:20-15:00",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 22702,
+        "timeRange": "15:00-15:30",
+        "text": "Réunion avancement modélisation",
+        "cat": "Réunion"
+      }
+    ],
+    "2026-02-26": [
+      {
+        "id": 22603,
+        "timeRange": "07:30-11:00",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 22601,
+        "timeRange": "11:00-12:00",
+        "text": "Réunion d'avancement NEF2",
+        "cat": "Réunion"
+      },
+      {
+        "id": 22602,
+        "timeRange": "12:00-13:00",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 22604,
+        "timeRange": "13:40-15:30",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-02-25": [
+      {
+        "id": 22501,
+        "timeRange": "07:30-08:00",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 22502,
+        "timeRange": "08:00-09:00",
+        "text": "Briefing Benjamin",
+        "cat": "Réunion"
+      },
+      {
+        "id": 22503,
+        "timeRange": "09:00-12:50",
+        "text": "Rapport d'observation",
+        "cat": "Général"
+      },
+      {
+        "id": 22504,
+        "timeRange": "13:30-15:30",
+        "text": "Rapport d'observation & balisage à pied",
+        "cat": "Général"
+      }
+    ],
+    "2026-02-24": [
+      {
+        "id": 22401,
+        "timeRange": "07:30-10:00",
+        "text": "Observation manip admin",
+        "cat": "Terrain"
+      },
+      {
+        "id": 22402,
+        "timeRange": "10:00-11:00",
+        "text": "Observation préparation",
+        "cat": "Terrain"
+      },
+      {
+        "id": 22403,
+        "timeRange": "11:00-12:20",
+        "text": "Cartographie temporel NEF2",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 22404,
+        "timeRange": "13:00-13:30",
+        "text": "Observation utilisation outil (calcul de charge)",
+        "cat": "Terrain"
+      },
+      {
+        "id": 22405,
+        "timeRange": "13:30-15:30",
+        "text": "Cartographie temporel NF2",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-02-23": [
+      {
+        "id": 22301,
+        "timeRange": "08:00-09:00",
+        "text": "Amélioration journal de bord",
+        "cat": "Général"
+      },
+      {
+        "id": 22303,
+        "timeRange": "09:00-09:30",
+        "text": "Gamba walk (Avec Anne)",
+        "cat": "Général"
+      },
+      {
+        "id": 22304,
+        "timeRange": "09:30-12:30",
+        "text": "Fiabilisation données",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 22305,
+        "timeRange": "13:10-14:00",
+        "text": "Fiabilisation données",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 22306,
+        "timeRange": "14:30-16:00",
+        "text": "Fiabilisation données",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 22302,
+        "timeRange": "14:00-14:30",
+        "text": "Projet Réorganisation Palettier",
+        "cat": "Réunion"
+      }
+    ],
+    "2026-02-20": [
+      {
+        "id": 22005,
+        "timeRange": "08:00-09:00",
+        "text": "Extraction de données",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 22004,
+        "timeRange": "09:00-10:00",
+        "text": "Formation sécurité/qualité/environnement",
+        "cat": "Général"
+      },
+      {
+        "id": 22003,
+        "timeRange": "10:00-12:00",
+        "text": "Fiabilisation des données",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 22002,
+        "timeRange": "12:40-14:00",
+        "text": "Finalisation base de donnée",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 22001,
+        "timeRange": "14:00-16:00",
+        "text": "Définition besoin calcul de charge",
+        "cat": "Calcul de charge"
+      }
+    ],
+    "2026-02-19": [
+      {
+        "id": 21901,
+        "timeRange": "08:00-16:00",
+        "text": "Fiabilisation base de données",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-02-18": [
+      {
+        "id": 21803,
+        "timeRange": "08:00-09:00",
+        "text": "Analyse Excel calcul de charge",
+        "cat": "Calcul de charge"
+      },
+      {
+        "id": 21801,
+        "timeRange": "09:00-11:00",
+        "text": "Visite à bord",
+        "cat": "Général"
+      },
+      {
+        "id": 21802,
+        "timeRange": "11:00-12:00",
+        "text": "Réunion besoins prévisionnelles (Modelisation)",
+        "cat": "Réunion"
+      },
+      {
+        "id": 21804,
+        "timeRange": "12:40-16:00",
+        "text": "Exportation & Nettoyage de données",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-02-17": [
+      {
+        "id": 21702,
+        "timeRange": "07:30-08:30",
+        "text": "Planning d'observation terrain",
+        "cat": "Général"
+      },
+      {
+        "id": 21701,
+        "timeRange": "08:30-12:30",
+        "text": "Création de l'application Journal de Bord",
+        "cat": "Général"
+      },
+      {
+        "id": 21703,
+        "timeRange": "10:30-11:00",
+        "text": "Brief planning 'Terrain'",
+        "cat": "Réunion"
+      },
+      {
+        "id": 21704,
+        "timeRange": "13:10-15:00",
+        "text": "Finalisation application Journal de Bord",
+        "cat": "Général"
+      },
+      {
+        "id": 21705,
+        "timeRange": "15:00-15:30",
+        "text": "Analyse de documents (données)",
+        "cat": "Calcul de charge"
+      }
+    ],
+    "2026-03-20": [
+      {
+        "id": 1774427978918,
+        "timeRange": "07:30-10:00",
+        "text": "Données fournisseurs lourds",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 1774428027958,
+        "timeRange": "11:00-11:30",
+        "text": "Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1774428048102,
+        "timeRange": "11:30-12:00",
+        "text": "Point Fournisseurs lourds",
+        "cat": "Réunion"
+      },
+      {
+        "id": 1774428067262,
+        "timeRange": "10:00-11:00",
+        "text": "Point GANTT Réorga NEF2",
+        "cat": "Réunion"
+      }
+    ],
+    "2026-03-23": [
+      {
+        "id": 1774428085198,
+        "timeRange": "07:30-12:40",
+        "text": "TOP Fournisseurs lourds",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 1774428099043,
+        "timeRange": "13:20-15:30",
+        "text": "TOP Fournisseurs lourds",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-03-24": [
+      {
+        "id": 1774428111699,
+        "timeRange": "07:30-12:40",
+        "text": "TOP Fournisseurs lourds",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 1774428134659,
+        "timeRange": "13:20-15:30",
+        "text": "Visu Etat des stocks 3D",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-25": [
+      {
+        "id": 1774428149667,
+        "timeRange": "07:30-10:00",
+        "text": "Problème blocage PC",
+        "cat": "Général"
+      },
+      {
+        "id": 1774430453905,
+        "timeRange": "10:00-12:00",
+        "text": "Etat des stocks avancé",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-26": [
+      {
+        "id": 1774510292189,
+        "timeRange": "08:00-13:00",
+        "text": "Etat stock visualisation",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1774535429440,
+        "timeRange": "13:40-14:30",
+        "text": "Etat stock visualisation",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1774535457936,
+        "timeRange": "14:30-15:30",
+        "text": "Présentation IDEA gestion de projet",
+        "cat": "Réunion"
+      },
+      {
+        "id": 1774535473792,
+        "timeRange": "15:30-16:00",
+        "text": "Etat stock visualisation",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-27": [
+      {
+        "id": 1774868997760,
+        "timeRange": "07:30-10:00",
+        "text": "Visualisation etat stock",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1774869011584,
+        "timeRange": "10:00-11:00",
+        "text": "Réunion Modélisation",
+        "cat": "Réunion"
+      },
+      {
+        "id": 1774869031233,
+        "timeRange": "11:00-12:40",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1774869040848,
+        "timeRange": "13:20-15:30",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-30": [
+      {
+        "id": 1774869063905,
+        "timeRange": "08:45-12:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1774880395022,
+        "timeRange": "12:40-16:45",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-03-31": [
+      {
+        "id": 1775039510661,
+        "timeRange": "13:25-14:30",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775039525461,
+        "timeRange": "14:30-15:30",
+        "text": "Avancement Réorga",
+        "cat": "Réunion"
+      },
+      {
+        "id": 1775050629456,
+        "timeRange": "07:30-12:40",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-01": [
+      {
+        "id": 1775050614338,
+        "timeRange": "07:30-12:40",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775050642456,
+        "timeRange": "13:20-16:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-02": [
+      {
+        "id": 1775221272788,
+        "timeRange": "08:00-12:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775221311956,
+        "timeRange": "12:40-16:00",
+        "text": "5S QPE",
+        "cat": "Général"
+      }
+    ],
+    "2026-04-03": [
+      {
+        "id": 1775221338965,
+        "timeRange": "07:30-8:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775221352637,
+        "timeRange": "8:00-12:45",
+        "text": "5S QPE",
+        "cat": "Général"
+      },
+      {
+        "id": 1775221368127,
+        "timeRange": "13:25-15:45",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-07": [
+      {
+        "id": 1775653834192,
+        "timeRange": "07:45-12:45",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775653856321,
+        "timeRange": "13:25-15:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775653872952,
+        "timeRange": "15:00-15:45",
+        "text": "Etats des stocks (extraction)",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-04-08": [
+      {
+        "id": 1775653890401,
+        "timeRange": "08:00-12:15",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775653898241,
+        "timeRange": "13:15-17:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-09": [
+      {
+        "id": 1775729161022,
+        "timeRange": "08:00-11:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775742345347,
+        "timeRange": "11:00-12:30",
+        "text": "Données emplacements LOGISTIPORT",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 1775742357803,
+        "timeRange": "13:50-16:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-10": [
+      {
+        "id": 1775826965342,
+        "timeRange": "08:00-9:00",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775827061071,
+        "timeRange": "9:00-10:00",
+        "text": "Réorga NEF2 - Analyse et Scénarios",
+        "cat": "Réunion"
+      },
+      {
+        "id": 1775827077922,
+        "timeRange": "10:00-11:30",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775827091968,
+        "timeRange": "11:30-12:00",
+        "text": "Modélisation navire",
+        "cat": "Réunion"
+      },
+      {
+        "id": 1775827112984,
+        "timeRange": "12:00-12:45",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1775830469379,
+        "timeRange": "13:25-16:55",
+        "text": "Visualisation Etat des stocks",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-13": [
+      {
+        "id": 1776148972037,
+        "timeRange": "07:45-12:15",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1776148987535,
+        "timeRange": "12:55-14:45",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-14": [
+      {
+        "id": 1776233940619,
+        "timeRange": "07:30-12:45",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1776233957203,
+        "timeRange": "13:25-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1776233977204,
+        "timeRange": "15:30-17:00",
+        "text": "Données emplacements",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-04-15": [
+      {
+        "id": 1776405020701,
+        "timeRange": "08:00-12:45",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1776405045172,
+        "timeRange": "13:25-15:30",
+        "text": "Emplacements stocks",
+        "cat": "Modélisation navire"
+      }
+    ],
+    "2026-04-16": [
+      {
+        "id": 1776405113797,
+        "timeRange": "07:30-12:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1776405139053,
+        "timeRange": "13:10-14:45",
+        "text": "Emplacements stocks",
+        "cat": "Modélisation navire"
+      },
+      {
+        "id": 1776405163100,
+        "timeRange": "14:45-15:30",
+        "text": "Modélisation données emplacements",
+        "cat": "Réunion"
+      }
+    ],
+    "2026-04-17": [
+      {
+        "id": 1777016245161,
+        "timeRange": "07:45-12:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1777016256057,
+        "timeRange": "13:10-15:45",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-20": [
+      {
+        "id": 1777016310903,
+        "timeRange": "07:30-12:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1777016317319,
+        "timeRange": "13:10-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-21": [
+      {
+        "id": 1777286787772,
+        "timeRange": "07:45-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1777286794525,
+        "timeRange": "12:40-15:45",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-22": [
+      {
+        "id": 1777286814389,
+        "timeRange": "08:00-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1777286823221,
+        "timeRange": "12:40-16:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-23": [
+      {
+        "id": 1777286839662,
+        "timeRange": "07:30-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1777286856721,
+        "timeRange": "12:40-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-24": [
+      {
+        "id": 1777286876945,
+        "timeRange": "07:45-9:30",
+        "text": "Dechargement",
+        "cat": "Général"
+      },
+      {
+        "id": 1777286891979,
+        "timeRange": "09:30-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-27": [
+      {
+        "id": 1779959166983,
+        "timeRange": "12:40-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959176647,
+        "timeRange": "07:30-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-28": [
+      {
+        "id": 1779959307527,
+        "timeRange": "08:00-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959320016,
+        "timeRange": "12:40-16:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-29": [
+      {
+        "id": 1779959332887,
+        "timeRange": "08:00-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959339839,
+        "timeRange": "12:40-16:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-04-30": [
+      {
+        "id": 1779959357800,
+        "timeRange": "07:30-12:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959367280,
+        "timeRange": "13:10-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-04": [
+      {
+        "id": 1779959438975,
+        "timeRange": "07:30-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959444384,
+        "timeRange": "12:40-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-05": [
+      {
+        "id": 1779959796866,
+        "timeRange": "08:00-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959804481,
+        "timeRange": "12:40-16:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-06": [
+      {
+        "id": 1779959818882,
+        "timeRange": "07:30-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959826888,
+        "timeRange": "12:40-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-07": [
+      {
+        "id": 1779959841681,
+        "timeRange": "08:00-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959853072,
+        "timeRange": "12:40-16:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-11": [
+      {
+        "id": 1779959870618,
+        "timeRange": "08:00-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959877089,
+        "timeRange": "12:40-16:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-12": [
+      {
+        "id": 1779959894772,
+        "timeRange": "07:30-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959903457,
+        "timeRange": "12:40-15:30",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-13": [
+      {
+        "id": 1779959944993,
+        "timeRange": "08:00-12:00",
+        "text": "Déchargement 530",
+        "cat": "Terrain"
+      },
+      {
+        "id": 1779959955801,
+        "timeRange": "12:40-16:00",
+        "text": "Déchargement 530",
+        "cat": "Terrain"
+      }
+    ],
+    "2026-05-15": [
+      {
+        "id": 1779959969601,
+        "timeRange": "08:00-12:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779959978370,
+        "timeRange": "12:40-16:00",
+        "text": "Outil gains de productivité",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-18": [
+      {
+        "id": 1779960003658,
+        "timeRange": "07:30-12:00",
+        "text": "Déchargement 530",
+        "cat": "Terrain"
+      },
+      {
+        "id": 1779960018393,
+        "timeRange": "12:40-15:30",
+        "text": "Déchargement 530",
+        "cat": "Terrain"
+      }
+    ],
+    "2026-05-19": [
+      {
+        "id": 1779960037049,
+        "timeRange": "08:00-12:00",
+        "text": "Déchargement 530",
+        "cat": "Terrain"
+      },
+      {
+        "id": 1779960042770,
+        "timeRange": "12:40-16:00",
+        "text": "Déchargement 530",
+        "cat": "Terrain"
+      }
+    ],
+    "2026-05-20": [
+      {
+        "id": 1779960071106,
+        "timeRange": "07:30-10:00",
+        "text": "Préparation présentation réorga",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779960087969,
+        "timeRange": "10:00-11:00",
+        "text": "Présentation Réorga NEF2",
+        "cat": "Réunion"
+      },
+      {
+        "id": 1779960120513,
+        "timeRange": "11:00-12:00",
+        "text": "Outil de dimensionnement",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779960137105,
+        "timeRange": "12:40-15:30",
+        "text": "Déchargement 530",
+        "cat": "Terrain"
+      }
+    ],
+    "2026-05-21": [
+      {
+        "id": 1779960153529,
+        "timeRange": "08:00-12:00",
+        "text": "Outil de dimensionnement",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779960160249,
+        "timeRange": "12:40-16:00",
+        "text": "Outil de dimensionnement",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-22": [
+      {
+        "id": 1779960170771,
+        "timeRange": "07:30-12:00",
+        "text": "Outil de dimensionnement",
+        "cat": "Réorganisation NEF2"
+      },
+      {
+        "id": 1779960181315,
+        "timeRange": "12:40-15:30",
+        "text": "Outil de dimensionnement",
+        "cat": "Réorganisation NEF2"
+      }
+    ],
+    "2026-05-26": [
+      {
+        "id": 1779960226705,
+        "timeRange": "08:00-12:00",
+        "text": "Préparation présentation outils",
+        "cat": "Général"
+      },
+      {
+        "id": 1779960238833,
+        "timeRange": "12:40-16:00",
+        "text": "Préparation présentation outils",
+        "cat": "Général"
+      }
+    ],
+    "2026-05-27": [
+      {
+        "id": 1779960260961,
+        "timeRange": "07:30-12:00",
+        "text": "Préparation présentation outils",
+        "cat": "Général"
+      },
+      {
+        "id": 1779960268617,
+        "timeRange": "12:40-15:30",
+        "text": "Préparation présentation outils",
+        "cat": "Général"
+      }
+    ],
+    "2026-05-28": [
+      {
+        "id": 1779960296603,
+        "timeRange": "08:00-12:00",
+        "text": "Préparation entretien",
+        "cat": "Général"
+      }
+    ]
+  },
+  "pointage": {
+    "2026-03-19": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:20",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-03-18": {
+      "arrivee": "07:30",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-17": {
+      "arrivee": "07:30",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-16": {
+      "arrivee": "07:30",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-13": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-12": {
+      "arrivee": "09:00",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "17:00",
+      "total": 420
+    },
+    "2026-03-11": {
+      "arrivee": "07:30",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-10": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-09": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-06": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-05": {
+      "arrivee": "07:30",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-04": {
+      "arrivee": "09:00",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "17:00",
+      "total": 420
+    },
+    "2026-03-03": {
+      "arrivee": "07:30",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-02": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:20",
+      "pauseFin": "13:00",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-02-27": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:20",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-02-26": {
+      "arrivee": "07:30",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-02-25": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-02-24": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:20",
+      "pauseFin": "13:00",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-02-23": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:30",
+      "pauseFin": "13:10",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-02-20": {
+      "arrivee": "08:00",
+      "pauseDebut": "13:20",
+      "pauseFin": "14:00",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-02-19": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-02-18": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-02-17": {
+      "arrivee": "07:30",
+      "pauseDebut": "11:00",
+      "pauseFin": "13:10",
+      "depart": "15:30",
+      "total": 330
+    },
+    "2026-03-20": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:20",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-23": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:20",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-24": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:50",
+      "pauseFin": "13:30",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-25": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-26": {
+      "arrivee": "08:00",
+      "pauseDebut": "13:00",
+      "pauseFin": "13:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-03-27": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:20",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-03-30": {
+      "arrivee": "08:45",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:45",
+      "total": 420
+    },
+    "2026-03-31": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:20",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-04-01": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:20",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-04-02": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:45",
+      "total": 405
+    },
+    "2026-04-03": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:45",
+      "pauseFin": "13:25",
+      "depart": "15:45",
+      "total": 435
+    },
+    "2026-04-07": {
+      "arrivee": "07:45",
+      "pauseDebut": "12:45",
+      "pauseFin": "13:25",
+      "depart": "15:45",
+      "total": 420
+    },
+    "2026-04-08": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:15",
+      "pauseFin": "13:15",
+      "depart": "17:00",
+      "total": 460
+    },
+    "2026-04-09": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:30",
+      "pauseFin": "13:50",
+      "depart": "16:00",
+      "total": 380
+    },
+    "2026-04-10": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:45",
+      "pauseFin": "13:25",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-04-13": {
+      "arrivee": "07:45",
+      "pauseDebut": "12:15",
+      "pauseFin": "12:55",
+      "depart": "14:45",
+      "total": 360
+    },
+    "2026-04-14": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:45",
+      "pauseFin": "13:25",
+      "depart": "17:00",
+      "total": 510
+    },
+    "2026-04-15": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:45",
+      "pauseFin": "13:25",
+      "depart": "15:30",
+      "total": 390
+    },
+    "2026-04-16": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:30",
+      "pauseFin": "13:10",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-04-17": {
+      "arrivee": "07:45",
+      "pauseDebut": "12:30",
+      "pauseFin": "13:10",
+      "depart": "15:45",
+      "total": 420
+    },
+    "2026-04-20": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:30",
+      "pauseFin": "13:10",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-04-21": {
+      "arrivee": "07:45",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:45",
+      "total": 420
+    },
+    "2026-04-24": {
+      "arrivee": "07:45",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:45",
+      "total": 420
+    },
+    "2026-04-22": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-04-23": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-04-27": {
+      "arrivee": "07:45",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:45",
+      "total": 420
+    },
+    "2026-04-28": {
+      "arrivee": "08:15",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:15",
+      "total": 420
+    },
+    "2026-04-29": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-04-30": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:20",
+      "pauseFin": "13:00",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-05-04": {
+      "arrivee": "08:20",
+      "pauseDebut": "12:00",
+      "pauseFin": "13:15",
+      "depart": "16:55",
+      "total": 420
+    },
+    "2026-05-05": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:40",
+      "pauseFin": "13:10",
+      "depart": "15:30",
+      "total": 430
+    },
+    "2026-05-06": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-05-07": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-05-11": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-05-12": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-05-13": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-05-15": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-05-18": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-05-19": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-05-20": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-05-21": {
+      "arrivee": "07:30",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "15:30",
+      "total": 420
+    },
+    "2026-05-22": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-05-26": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    },
+    "2026-05-28": {
+      "arrivee": "08:00",
+      "pauseDebut": "12:00",
+      "pauseFin": "12:40",
+      "depart": "16:00",
+      "total": 420
+    }
+  },
+  "sort": "desc",
+  "date": "2026-05-28T09:26:09.848Z"
+}
