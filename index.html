@@ -336,23 +336,26 @@
     <h2>Administration</h2>
     <p class="subtitle">Gestion des accès et sauvegarde</p>
 
-    <p id="backupStatus" class="small-hint"></p>
-
-    <div id="backupBanner">
-      <span>Autorisation requise pour la sauvegarde automatique.</span>
-      <button id="reauthBackupBtn" class="btn-ghost">🔐 Autoriser</button>
+    <div class="section-actions">
+      <button id="exportBackupBtn">💾 Exporter une sauvegarde (.json)</button>
+      <button id="importBackupBtn" class="btn-ghost">📤 Importer une sauvegarde</button>
     </div>
+    <p class="small-hint">Fonctionne sur PC comme sur mobile. Le fichier exporté se télécharge normalement.</p>
 
-    <div class="section-actions" style="margin-top:12px;">
-      <button id="chooseBackupFileBtn"   class="btn-ghost">📁 Choisir fichier</button>
-      <button id="restoreFromBackupBtn"  class="btn-ghost">🔄 Restaurer</button>
-      <button id="exportBackupBtn"       class="btn-ghost">💾 Sauvegarder</button>
-      <button id="importBackupBtn"       class="btn-ghost">📤 Importer</button>
+    <div id="advancedBackupZone" class="hidden" style="margin-top:14px; padding:12px 14px; border:1px dashed var(--line); border-radius:var(--r-md);">
+      <p class="small-hint" style="margin-top:0;">Option avancée (PC uniquement) : lier un fichier local pour sauvegarder en un clic sans le re-télécharger à chaque fois.</p>
+      <div class="section-actions" style="margin-bottom:0;">
+        <button id="chooseBackupFileBtn"   class="btn-ghost">📁 Choisir fichier</button>
+        <button id="manualBackupBtn"       class="btn-ghost">💾 Sauvegarder dans ce fichier</button>
+        <button id="restoreFromBackupBtn"  class="btn-ghost">🔄 Restaurer depuis ce fichier</button>
+      </div>
+      <p id="backupStatus" class="small-hint" style="margin-bottom:0;"></p>
     </div>
 
     <input id="backupFileInput" type="file" accept="application/json" style="display:none" />
 
     <h3>Identifiants</h3>
+    <p id="defaultCredsWarning" class="small-hint hidden" style="color:var(--amber);">⚠️ Vous utilisez encore les identifiants par défaut. Si vous accédez à l'app depuis une autre adresse (autre hébergement, autre navigateur…), elle ne « voit » pas vos données précédentes — chaque adresse a son propre stockage local. Pensez à exporter une sauvegarde et à l'importer ici si besoin.</p>
     <div class="row">
       <input id="admUser" class="grow" placeholder="Nom d'utilisateur" autocomplete="off" />
       <input id="admPass" class="grow" type="password" placeholder="Mot de passe" autocomplete="off" />

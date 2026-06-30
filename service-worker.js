@@ -1,4 +1,4 @@
-const CACHE_NAME = "journal-v3-cache-v29"; // ← incrémenter si besoin
+const CACHE_NAME = "journal-v3-cache-v30"; // ← incrémenter si besoin
 const ASSETS = ["./","./index.html","./style.css","./app.js","./fox.png","./manifest.json"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));

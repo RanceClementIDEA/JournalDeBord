@@ -1938,6 +1938,11 @@ function initAdmin() {
     qs("#admUser").value = creds.username;
     qs("#admPass").value = "";
 
+    qs("#defaultCredsWarning")?.classList.toggle(
+        "hidden",
+        !(creds.username === DEFAULT_CREDS.username && creds.password === DEFAULT_CREDS.password)
+    );
+
     const wh = getWorkHours();
     qs("#admWorkStart").value = wh.start;
     qs("#admWorkEnd").value   = wh.end;
@@ -2003,10 +2008,18 @@ function initAdmin() {
         toast("Réinitialisés", "Identifiants par défaut restaurés.", "info");
     };
 
-    qs("#chooseBackupFileBtn").onclick  = chooseBackupFile;
-    qs("#exportBackupBtn").onclick      = manualBackup;
+    qs("#exportBackupBtn").onclick      = exportBackupFile;
     qs("#importBackupBtn").onclick      = importBackupFile;
-    qs("#restoreFromBackupBtn").onclick = restoreFromConfiguredBackup;
+
+    // Option avancée (File System Access API) : uniquement si le navigateur la supporte (Chrome/Edge desktop)
+    if ("showSaveFilePicker" in window) {
+        qs("#advancedBackupZone").classList.remove("hidden");
+        qs("#chooseBackupFileBtn").onclick  = chooseBackupFile;
+        qs("#manualBackupBtn").onclick      = manualBackup;
+        qs("#restoreFromBackupBtn").onclick = restoreFromConfiguredBackup;
+    } else {
+        qs("#advancedBackupZone").classList.add("hidden");
+    }
 }
 
 function renderAdmCats() {
@@ -2059,6 +2072,21 @@ function buildBackupObject() {
         creds: getCreds(), cats: getCats(), journal: getJournal(),
         pointage: getPoint(), sort: getSortOrder(), workHours: getWorkHours(), rate: getRate(), date: new Date().toISOString()
     };
+}
+
+/* Export universel — fonctionne sur PC et mobile (téléchargement classique) */
+function exportBackupFile() {
+    const blob = new Blob([JSON.stringify(buildBackupObject(), null, 2)], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    const stamp = ymd(new Date());
+    a.href = url;
+    a.download = `journal_backup_${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Sauvegarde téléchargée ✅", a.download, "success");
 }
 
 async function chooseBackupFile() {
