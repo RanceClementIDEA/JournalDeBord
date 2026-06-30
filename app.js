@@ -1942,6 +1942,8 @@ const setSyncConfig = cfg => cfg ? localStorage.setItem(LS_SYNC, JSON.stringify(
 let fbApp = null, fbDb = null, fbUnsub = null;
 let syncDebounceHandle = null;
 let lastSyncPushAt = 0;
+let lastAppliedSyncAt = 0;
+let connectedSyncCode = null;
 let applyingRemoteSync = false;
 
 function syncStatusEl() { return qs("#syncStatus"); }
@@ -2014,7 +2016,10 @@ function listenForRemoteChanges(code) {
         snap => {
             if (!snap.exists) return;
             const data = snap.data();
-            if (!data || data.updatedAt === lastSyncPushAt) return; // écho de notre propre écriture, on ignore
+            if (!data || !data.updatedAt) return;
+            // Ignore l'écho de notre propre écriture, ou une donnée déjà appliquée (évite toute boucle)
+            if (data.updatedAt === lastSyncPushAt || data.updatedAt === lastAppliedSyncAt) return;
+            lastAppliedSyncAt = data.updatedAt;
             applyBackup(data, true);
             toast("Mise à jour reçue ☁️", "Données synchronisées depuis un autre appareil.", "info");
         },
@@ -2029,12 +2034,19 @@ function connectSync(manual) {
         setSyncStatusUI("error", "Librairie Firebase non chargée (vérifiez votre connexion).");
         return;
     }
+    // Déjà connecté à ce même code : ne rien refaire (évite toute resouscription inutile)
+    if (fbDb && fbUnsub && connectedSyncCode === cfg.code) {
+        setSyncStatusUI("connected");
+        if (manual) toast("Déjà connecté ☁️", `Code : ${cfg.code}`, "info");
+        return;
+    }
     try {
         if (!fbApp) {
             fbApp = firebase.apps && firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(cfg.config);
             fbDb  = firebase.firestore();
         }
         listenForRemoteChanges(cfg.code);
+        connectedSyncCode = cfg.code;
         setSyncStatusUI("connected");
         if (manual) toast("Connecté ☁️", `Code : ${cfg.code}`, "success");
     } catch (err) {
@@ -2045,6 +2057,7 @@ function connectSync(manual) {
 
 function disconnectSync() {
     if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+    connectedSyncCode = null;
     setSyncConfig(null);
     setSyncStatusUI("off");
     toast("Synchronisation désactivée", "", "info");
@@ -2068,7 +2081,7 @@ function initSyncPanel() {
         const code = qs("#syncCodeInput").value.trim();
         if (!code) return toast("Code requis", "Choisissez un code de synchronisation (identique sur tous vos appareils).", "warn");
 
-        fbApp = null; fbDb = null; // force ré-init avec la nouvelle config
+        fbApp = null; fbDb = null; connectedSyncCode = null; // force ré-init avec la nouvelle config
         setSyncConfig({ config: parsedConfig, code, enabled: true });
         connectSync(true);
     };
