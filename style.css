@@ -737,6 +737,19 @@ button:active { transform: scale(.97); }
   white-space: nowrap;
 }
 
+/* ── Canvas : ne jamais dépasser leur conteneur (cause fréquente de débordement mobile) ── */
+canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Le canvas Gantt principal reste scrollable à sa taille réelle (très large, voulu) */
+#ganttCanvas {
+  max-width: none;
+  height: auto;
+}
+
 /* ── Tables ─────────────────────────────────────────────── */
 .table {
   width: 100%;
