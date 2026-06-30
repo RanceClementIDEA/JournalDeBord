@@ -2324,11 +2324,8 @@ console.log("✅ Journal de Bord Pro — chargé");
 
 /* ── PWA : enregistrement du service worker ───────────── */
 if ("serviceWorker" in navigator) {
-    let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (refreshing) return;
-        refreshing = true;
-        window.location.reload();
+        console.log("✅ Nouvelle version du service worker active.");
     });
     window.addEventListener("load", () => {
         navigator.serviceWorker.register("./service-worker.js")
