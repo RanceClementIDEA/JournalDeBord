@@ -118,15 +118,15 @@ const DEFAULT_CATS  = ["Général", "Production", "Qualité", "Méthodes", "Réu
 const LS = { CREDS: "jb_creds", CATS: "jb_cats", JOURNAL: "jb_journal", POINT: "jb_pointage", SORT: "jb_sort" };
 
 const getCreds    = () => JSON.parse(localStorage.getItem(LS.CREDS))   || DEFAULT_CREDS;
-const setCreds    = (u, p) => localStorage.setItem(LS.CREDS, JSON.stringify({ username: u, password: p }));
+const setCreds    = (u, p) => { localStorage.setItem(LS.CREDS, JSON.stringify({ username: u, password: p })); scheduleAutoSync(); };
 const getCats     = () => JSON.parse(localStorage.getItem(LS.CATS))    || DEFAULT_CATS;
-const setCats     = arr => localStorage.setItem(LS.CATS, JSON.stringify(arr));
+const setCats     = arr => { localStorage.setItem(LS.CATS, JSON.stringify(arr)); scheduleAutoSync(); };
 const getJournal  = () => JSON.parse(localStorage.getItem(LS.JOURNAL)) || {};
-const setJournal  = obj => localStorage.setItem(LS.JOURNAL, JSON.stringify(obj));
+const setJournal  = obj => { localStorage.setItem(LS.JOURNAL, JSON.stringify(obj)); scheduleAutoSync(); };
 const getPoint    = () => JSON.parse(localStorage.getItem(LS.POINT))   || {};
-const setPoint    = obj => localStorage.setItem(LS.POINT, JSON.stringify(obj));
+const setPoint    = obj => { localStorage.setItem(LS.POINT, JSON.stringify(obj)); scheduleAutoSync(); };
 const getSortOrder = () => localStorage.getItem(LS.SORT) || "desc";
-const setSortOrder = v  => localStorage.setItem(LS.SORT, v);
+const setSortOrder = v  => { localStorage.setItem(LS.SORT, v); scheduleAutoSync(); };
 
 /* ── Session ─────────────────────────────────────────── */
 const isLogged     = () => sessionStorage.getItem("logged") === "1";
@@ -166,12 +166,12 @@ function updateUserTab() {
 /* ── Header — horloge & progression ─────────────────── */
 const LS_WORKHOURS = "jb_workhours";
 const getWorkHours = () => JSON.parse(localStorage.getItem(LS_WORKHOURS)) || { start: "08:00", end: "18:00" };
-const setWorkHours = (start, end) => localStorage.setItem(LS_WORKHOURS, JSON.stringify({ start, end }));
+const setWorkHours = (start, end) => { localStorage.setItem(LS_WORKHOURS, JSON.stringify({ start, end })); scheduleAutoSync(); };
 
 /* ── Rémunération (taux horaire) ──────────────────────── */
 const LS_RATE = "jb_rate";
 const getRate = () => JSON.parse(localStorage.getItem(LS_RATE)) || { amount: 0, currency: "€" };
-const setRate = (amount, currency) => localStorage.setItem(LS_RATE, JSON.stringify({ amount: +amount || 0, currency: currency || "€" }));
+const setRate = (amount, currency) => { localStorage.setItem(LS_RATE, JSON.stringify({ amount: +amount || 0, currency: currency || "€" })); scheduleAutoSync(); };
 const fmtMoney = (min, rate) => {
     const value = (min / 60) * (rate?.amount || 0);
     return value.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + (rate?.currency || "€");
@@ -287,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initPointage();
         qs("#fabAddTask").classList.remove("hidden");
         show("journal");
+        connectSync(false);
     }
 });
 
@@ -304,6 +305,7 @@ function doLogin() {
         initPointage();
         qs("#fabAddTask").classList.remove("hidden");
         toast("Bienvenue " + user + " 👋", "Journal de bord chargé.", "success");
+        connectSync(false);
     } else {
         toast("Identifiants incorrects", "Vérifiez votre nom et mot de passe.", "error");
         qs("#loginPass").value = "";
@@ -1931,6 +1933,166 @@ function exportRapportAlternancePdf() {
 }
 
 /* ═══════════════════════════════════════════════════════
+   SYNCHRONISATION CLOUD (Firebase Firestore)
+═══════════════════════════════════════════════════════ */
+const LS_SYNC = "jb_sync_config";
+const getSyncConfig = () => { try { return JSON.parse(localStorage.getItem(LS_SYNC)); } catch { return null; } };
+const setSyncConfig = cfg => cfg ? localStorage.setItem(LS_SYNC, JSON.stringify(cfg)) : localStorage.removeItem(LS_SYNC);
+
+let fbApp = null, fbDb = null, fbUnsub = null;
+let syncDebounceHandle = null;
+let lastSyncPushAt = 0;
+let applyingRemoteSync = false;
+
+function syncStatusEl() { return qs("#syncStatus"); }
+
+function setSyncStatusUI(state, detail) {
+    const el = syncStatusEl();
+    if (!el) return;
+    const map = {
+        off:       { text: "⚪ Synchronisation non configurée", cls: "" },
+        connected: { text: "🟢 Connecté — synchronisation active", cls: "green" },
+        syncing:   { text: "🔄 Synchronisation…", cls: "cyan" },
+        error:     { text: "🔴 Erreur : " + (detail || "voir console"), cls: "red" }
+    };
+    const s = map[state] || map.off;
+    el.textContent = s.text;
+    el.className = "small-hint " + s.cls;
+}
+
+function syncDocRef(code) {
+    return fbDb.collection("journal_sync").doc(code);
+}
+
+function scheduleAutoSync() {
+    const cfg = getSyncConfig();
+    if (!cfg || !cfg.enabled || !fbDb || applyingRemoteSync) return;
+    clearTimeout(syncDebounceHandle);
+    syncDebounceHandle = setTimeout(() => pushToCloud(false), 1500);
+}
+
+async function pushToCloud(manual) {
+    const cfg = getSyncConfig();
+    if (!cfg || !fbDb) return;
+    setSyncStatusUI("syncing");
+    try {
+        const data = buildBackupObject();
+        data.updatedAt = Date.now();
+        lastSyncPushAt = data.updatedAt;
+        await syncDocRef(cfg.code).set(data);
+        setSyncStatusUI("connected");
+        if (manual) toast("Synchronisé ☁️", "Données envoyées vers le cloud.", "success");
+    } catch (err) {
+        setSyncStatusUI("error", err.message);
+        if (manual) toast("Erreur de synchronisation", err.message, "error");
+    }
+}
+
+async function pullFromCloud(manual) {
+    const cfg = getSyncConfig();
+    if (!cfg || !fbDb) return;
+    setSyncStatusUI("syncing");
+    try {
+        const snap = await syncDocRef(cfg.code).get();
+        if (!snap.exists) {
+            setSyncStatusUI("connected");
+            if (manual) toast("Aucune donnée cloud", "Ce code de synchronisation est vide pour l'instant.", "warn");
+            return;
+        }
+        applyBackup(snap.data(), true);
+        setSyncStatusUI("connected");
+        if (manual) toast("Données récupérées ☁️", "Synchronisation depuis le cloud effectuée.", "success");
+    } catch (err) {
+        setSyncStatusUI("error", err.message);
+        if (manual) toast("Erreur de synchronisation", err.message, "error");
+    }
+}
+
+function listenForRemoteChanges(code) {
+    if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+    fbUnsub = syncDocRef(code).onSnapshot(
+        snap => {
+            if (!snap.exists) return;
+            const data = snap.data();
+            if (!data || data.updatedAt === lastSyncPushAt) return; // écho de notre propre écriture, on ignore
+            applyBackup(data, true);
+            toast("Mise à jour reçue ☁️", "Données synchronisées depuis un autre appareil.", "info");
+        },
+        err => setSyncStatusUI("error", err.message)
+    );
+}
+
+function connectSync(manual) {
+    const cfg = getSyncConfig();
+    if (!cfg || !cfg.config || !cfg.code) { setSyncStatusUI("off"); return; }
+    if (typeof firebase === "undefined") {
+        setSyncStatusUI("error", "Librairie Firebase non chargée (vérifiez votre connexion).");
+        return;
+    }
+    try {
+        if (!fbApp) {
+            fbApp = firebase.apps && firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(cfg.config);
+            fbDb  = firebase.firestore();
+        }
+        listenForRemoteChanges(cfg.code);
+        setSyncStatusUI("connected");
+        if (manual) toast("Connecté ☁️", `Code : ${cfg.code}`, "success");
+    } catch (err) {
+        setSyncStatusUI("error", err.message);
+        if (manual) toast("Échec de connexion", err.message, "error");
+    }
+}
+
+function disconnectSync() {
+    if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+    setSyncConfig(null);
+    setSyncStatusUI("off");
+    toast("Synchronisation désactivée", "", "info");
+}
+
+function initSyncPanel() {
+    const cfg = getSyncConfig();
+    qs("#syncConfigInput").value = cfg?.config ? JSON.stringify(cfg.config, null, 2) : "";
+    qs("#syncCodeInput").value   = cfg?.code || "";
+    qs("#syncEnabledToggle").checked = !!cfg?.enabled;
+
+    if (cfg && cfg.config && cfg.code) connectSync(false); else setSyncStatusUI("off");
+
+    qs("#connectSyncBtn").onclick = () => {
+        let parsedConfig;
+        try {
+            parsedConfig = JSON.parse(qs("#syncConfigInput").value.trim());
+        } catch {
+            return toast("Configuration invalide", "Collez le JSON de config Firebase tel quel.", "error");
+        }
+        const code = qs("#syncCodeInput").value.trim();
+        if (!code) return toast("Code requis", "Choisissez un code de synchronisation (identique sur tous vos appareils).", "warn");
+
+        fbApp = null; fbDb = null; // force ré-init avec la nouvelle config
+        setSyncConfig({ config: parsedConfig, code, enabled: true });
+        connectSync(true);
+    };
+
+    qs("#syncEnabledToggle").onchange = () => {
+        const c = getSyncConfig();
+        if (!c) return;
+        c.enabled = qs("#syncEnabledToggle").checked;
+        setSyncConfig(c);
+        toast(c.enabled ? "Synchronisation activée" : "Synchronisation en pause", "", "info");
+    };
+
+    qs("#pushSyncBtn").onclick = () => pushToCloud(true);
+    qs("#pullSyncBtn").onclick = () => {
+        if (!confirm("Ceci va remplacer vos données locales par celles du cloud. Continuer ?")) return;
+        pullFromCloud(true);
+    };
+    qs("#disconnectSyncBtn").onclick = () => {
+        if (!confirm("Désactiver la synchronisation cloud sur cet appareil ?")) return;
+        disconnectSync();
+    };
+}
+
+/* ═══════════════════════════════════════════════════════
    ADMIN
 ═══════════════════════════════════════════════════════ */
 function initAdmin() {
@@ -1942,6 +2104,8 @@ function initAdmin() {
         "hidden",
         !(creds.username === DEFAULT_CREDS.username && creds.password === DEFAULT_CREDS.password)
     );
+
+    initSyncPanel();
 
     const wh = getWorkHours();
     qs("#admWorkStart").value = wh.start;
@@ -2139,8 +2303,9 @@ async function restoreFromConfiguredBackup() {
     }
 }
 
-function applyBackup(obj) {
+function applyBackup(obj, fromSync = false) {
     if (!obj || !obj.journal || !obj.pointage) return toast("Sauvegarde invalide", "Structure non reconnue.", "error");
+    applyingRemoteSync = true;
     setCreds(obj.creds.username, obj.creds.password);
     setCats(obj.cats);
     setJournal(obj.journal);
@@ -2148,10 +2313,11 @@ function applyBackup(obj) {
     setSortOrder(obj.sort || "desc");
     if (obj.workHours) setWorkHours(obj.workHours.start, obj.workHours.end);
     if (obj.rate) setRate(obj.rate.amount, obj.rate.currency);
+    applyingRemoteSync = false;
     initJournal();
     initPointage();
     initAdmin();
-    toast("Restauration complète ✅", `Sauvegarde du ${new Date(obj.date).toLocaleDateString("fr-FR")}`, "success");
+    if (!fromSync) toast("Restauration complète ✅", `Sauvegarde du ${new Date(obj.date).toLocaleDateString("fr-FR")}`, "success");
 }
 
 console.log("✅ Journal de Bord Pro — chargé");

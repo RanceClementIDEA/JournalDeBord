@@ -1,4 +1,4 @@
-const CACHE_NAME = "journal-v3-cache-v31"; // ← incrémenter à chaque déploiement
+const CACHE_NAME = "journal-v3-cache-v33"; // ← incrémenter à chaque déploiement
 const ASSETS = ["./","./index.html","./style.css","./app.js","./fox.png","./manifest.json"];
 
 self.addEventListener("install", e => {
