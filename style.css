@@ -1125,9 +1125,11 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--s
     scroll-snap-type: x proximity;
     padding-bottom: 2px;
     scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
   }
   .tabs-nav::-webkit-scrollbar { display: none; }
-  .tab { white-space: nowrap; scroll-snap-align: start; flex-shrink: 0; }
+  .tab { white-space: nowrap; scroll-snap-align: start; flex-shrink: 0; padding-left: 13px; padding-right: 13px; font-size: .8rem; }
   .tabs-actions { justify-content: flex-end; }
 
   /* Zones tactiles plus grandes (min. 44px recommandé) */
@@ -1142,14 +1144,15 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--s
   h2 { font-size: 1.05rem; }
   h3 { font-size: .88rem; }
 
-  /* Formulaires : un champ par ligne, pleine largeur, plus lisible */
+  /* Formulaires : laisser les champs se regrouper naturellement par 2 quand la place le permet */
   .row { gap: 8px; }
-  .row > .grow { flex: 1 1 100%; }
 
-  /* Tableaux pointage : défilement horizontal plutôt qu'écrasement */
-  .table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
-  .table thead, .table tbody, .table tr { display: table; width: 100%; table-layout: fixed; }
-  .table th:first-child, .table td:first-child { white-space: normal; }
+  /* Tableaux pointage : défilement horizontal propre (sans casser l'alignement des colonnes) */
+  .table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table thead, .table tbody { display: revert; }
+  .table tr { display: revert; }
+  .table th, .table td { white-space: nowrap; }
+  .table th:first-child, .table td:first-child { white-space: normal; min-width: 110px; }
 
   /* KPI : 2 colonnes au lieu d'une grille serrée */
   .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
