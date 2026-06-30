@@ -1129,20 +1129,24 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--s
    ERGONOMIE MOBILE
 ═══════════════════════════════════════════════════════════ */
 @media (max-width: 780px) {
-  /* Barre d'onglets : défilement horizontal au doigt, actions toujours visibles */
+  /* Barre d'onglets : tous visibles d'un coup, en grille, pas de glissement nécessaire */
   .tabs { flex-direction: column; align-items: stretch; gap: 8px; }
   .tabs-nav {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
-    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    overflow: visible;
   }
-  .tabs-nav::-webkit-scrollbar { display: none; }
-  .tab { white-space: nowrap; scroll-snap-align: start; flex-shrink: 0; padding-left: 13px; padding-right: 13px; font-size: .8rem; }
+  .tab {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: .76rem;
+  }
+  .tab span { display: inline; }
   .tabs-actions { justify-content: flex-end; }
 
   /* Zones tactiles plus grandes (min. 44px recommandé) */

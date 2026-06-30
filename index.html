@@ -354,6 +354,39 @@
 
     <input id="backupFileInput" type="file" accept="application/json" style="display:none" />
 
+    <div class="sep"></div>
+
+    <h3>☁️ Synchronisation cloud (Firebase)</h3>
+    <p class="small-hint" style="margin-top:-6px;">
+      Synchronise automatiquement vos données entre tous vos appareils via votre propre projet Firebase gratuit.
+      Collez ici la configuration de votre projet (Firebase Console → Paramètres du projet → vos applications → SDK config),
+      puis choisissez un code de synchronisation identique sur chaque appareil que vous voulez relier.
+    </p>
+    <p id="syncStatus" class="small-hint">⚪ Synchronisation non configurée</p>
+
+    <textarea id="syncConfigInput" rows="5" style="width:100%;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:.78rem;" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "projectId": "...",
+  ...
+}'></textarea>
+
+    <div class="row" style="margin-bottom:10px;">
+      <input id="syncCodeInput" class="grow" placeholder="Code de synchronisation (ex : mon-alternance-2026)" style="flex:1 1 240px;" />
+      <button id="connectSyncBtn">☁️ Connecter</button>
+    </div>
+
+    <label class="flex-row" style="gap:8px; font-size:.82rem; color:var(--text-3); margin-bottom:10px;">
+      <input type="checkbox" id="syncEnabledToggle" style="width:auto;" />
+      Synchronisation automatique active (sinon, manuelle uniquement)
+    </label>
+
+    <div class="section-actions">
+      <button id="pushSyncBtn" class="btn-ghost">⬆️ Envoyer maintenant</button>
+      <button id="pullSyncBtn" class="btn-ghost">⬇️ Récupérer depuis le cloud</button>
+      <button id="disconnectSyncBtn" class="btn-ghost">🔌 Désactiver</button>
+    </div>
+
     <h3>Identifiants</h3>
     <p id="defaultCredsWarning" class="small-hint hidden" style="color:var(--amber);">⚠️ Vous utilisez encore les identifiants par défaut. Si vous accédez à l'app depuis une autre adresse (autre hébergement, autre navigateur…), elle ne « voit » pas vos données précédentes — chaque adresse a son propre stockage local. Pensez à exporter une sauvegarde et à l'importer ici si besoin.</p>
     <div class="row">
@@ -409,6 +442,8 @@
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" onerror="console.warn('Firebase indisponible (hors-ligne) — synchronisation cloud désactivée pour cette session.')"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="app.js"></script>
 
 </body>
