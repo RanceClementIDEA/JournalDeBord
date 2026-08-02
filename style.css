@@ -3,7 +3,8 @@
    Design system complet
 ======================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+/* Polices locales — l'application ne contacte aucun serveur externe. */
+@import url('fonts/fonts.css');
 
 /* ── Tokens ────────────────────────────────────────────── */
 :root {
@@ -174,11 +175,6 @@ h3 { font-size: .95rem; font-weight: 700; letter-spacing: -.01em; color: var(--t
   text-shadow: 0 1px 2px rgba(0,0,0,.35);
 }
 
-.logo-fallback-lg {
-  border-width: 3px;
-  font-size: 1.7rem;
-}
-
 /* ── Thème clair ──────────────────────────────────────────── */
 html[data-theme="light"] {
   --bg:          #f4f3fb;
@@ -196,84 +192,6 @@ html[data-theme="light"] {
 }
 html[data-theme="light"] body::before { opacity: .25; }
 
-/* ── Connexion ─────────────────────────────────────────────── */
-.login-card {
-  max-width: 420px;
-  margin: 40px auto;
-  padding: 36px 30px;
-  text-align: center;
-}
-
-.login-hero { margin-bottom: 26px; }
-
-.login-logo-ring {
-  width: 92px; height: 92px;
-  margin: 0 auto 16px;
-  border-radius: 50%;
-  padding: 4px;
-  background: conic-gradient(from 0deg, var(--accent), var(--cyan), var(--green), var(--accent));
-  box-shadow: 0 0 30px var(--accent-glow);
-  animation: spin-slow 8s linear infinite;
-}
-
-.login-logo-img {
-  width: 100%; height: 100%;
-  border-radius: 50%;
-  border: 3px solid var(--bg);
-  object-fit: cover;
-  display: block;
-  background: var(--surface);
-}
-
-.login-title {
-  font-size: 1.4rem;
-  font-weight: 900;
-  letter-spacing: -.02em;
-  margin-bottom: 4px;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.input-icon-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon-wrap input {
-  padding-left: 40px;
-  padding-right: 40px;
-  text-align: left;
-}
-
-.input-icon {
-  position: absolute;
-  left: 13px;
-  font-size: .9rem;
-  opacity: .7;
-  pointer-events: none;
-}
-
-.input-icon-btn {
-  position: absolute;
-  right: 4px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 6px 8px;
-  font-size: .85rem;
-  cursor: pointer;
-  color: var(--text-3);
-}
-.input-icon-btn:hover { filter: none; box-shadow: none; color: var(--text); }
-
-.login-submit { width: 100%; justify-content: center; padding: 12px 16px; }
-
 /* ── Bouton flottant ajout rapide ─────────────────────────── */
 .fab {
   position: fixed;
@@ -288,22 +206,78 @@ html[data-theme="light"] body::before { opacity: .25; }
   z-index: 50;
   box-shadow: var(--shadow-btn);
 }
-@media (min-width: 781px) { .fab { display: none !important; } }
+/* Le bouton reste disponible sur PC : l'ajout rapide y est tout aussi utile
+   (raccourci clavier « a » également). */
 
-/* ── Badges priorité / statut ─────────────────────────────── */
-.priority-badge, .status-badge {
-  font-size: .68rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
+/* ── Modale d'ajout rapide ────────────────────────────────── */
+.quick-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: quickFade .18s ease;
 }
-.priority-badge[data-priority="Haute"]   { background: rgba(255,77,109,.15); color: var(--red); }
-.priority-badge[data-priority="Moyenne"] { background: rgba(255,201,71,.15); color: var(--amber); }
-.priority-badge[data-priority="Basse"]   { background: rgba(0,224,150,.15);  color: var(--green); }
-.status-badge[data-status="À faire"]   { background: rgba(138,130,180,.18); color: var(--text-2); }
-.status-badge[data-status="En cours"]  { background: rgba(0,229,255,.15); color: var(--cyan); }
-.status-badge[data-status="Terminé"]   { background: rgba(0,224,150,.15); color: var(--green); }
+@keyframes quickFade { from { opacity: 0; } to { opacity: 1; } }
+
+.quick-sheet {
+  width: 100%;
+  max-width: 520px;
+  background: linear-gradient(145deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: var(--shadow-card);
+  padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
+  animation: quickSlide .22s cubic-bezier(.22,.8,.3,1);
+}
+@keyframes quickSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.quick-sheet-grip {
+  width: 42px; height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  margin: 0 auto 12px;
+}
+
+.quick-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.quick-sheet-head h3 { margin: 0; }
+
+.quick-label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-3);
+  margin: 12px 0 5px;
+}
+
+.quick-sheet input,
+.quick-sheet select { width: 100%; }
+
+.quick-submit {
+  width: 100%;
+  justify-content: center;
+  padding: 12px 16px;
+  margin-top: 16px;
+}
+
+@media (min-width: 781px) {
+  .quick-overlay { align-items: center; }
+  .quick-sheet {
+    border-radius: var(--r-lg);
+    padding: 12px 22px 22px;
+    animation: quickPop .18s cubic-bezier(.22,.8,.3,1);
+  }
+  .quick-sheet-grip { display: none; }
+  @keyframes quickPop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+}
 
 .task-note-toggle {
   background: transparent;
@@ -528,47 +502,6 @@ html[data-theme="light"] body::before { opacity: .25; }
   box-shadow: none;
   filter: none;
 }
-.icon-btn-danger:hover {
-  border-color: rgba(255,77,109,.5);
-  background: rgba(255,77,109,.12);
-  color: var(--red);
-}
-
-/* ── Profil utilisateur connecté ──────────────────────────── */
-.user-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 6px 4px 4px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,.03);
-}
-
-.user-avatar {
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, var(--accent), #5c35cc 60%, var(--cyan));
-  color: #fff;
-  font-weight: 800;
-  font-size: .68rem;
-  letter-spacing: -.02em;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-weight: 700;
-  font-size: .82rem;
-  color: var(--text);
-  max-width: 130px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ── Forms ──────────────────────────────────────────────── */
 .row {
   display: flex;
@@ -641,12 +574,6 @@ button:active { transform: scale(.97); }
 .btn-danger {
   background: linear-gradient(135deg, var(--red), #c2244a);
   box-shadow: none;
-}
-
-.btn-cyan {
-  background: linear-gradient(135deg, #0097a7, var(--cyan));
-  color: #000;
-  box-shadow: var(--shadow-cyan);
 }
 
 /* ── Separators ─────────────────────────────────────────── */
@@ -744,12 +671,6 @@ canvas {
   display: block;
 }
 
-/* Le canvas Gantt principal reste scrollable à sa taille réelle (très large, voulu) */
-#ganttCanvas {
-  max-width: none;
-  height: auto;
-}
-
 /* ── Tables ─────────────────────────────────────────────── */
 .table {
   width: 100%;
@@ -794,7 +715,6 @@ canvas {
 
 /* Cellule total colorée */
 .total-positive { color: var(--green); font-weight: 700; }
-.total-negative { color: var(--red); font-weight: 700; }
 
 /* ── Stats KPI ──────────────────────────────────────────── */
 .kpi-row {
@@ -863,20 +783,6 @@ canvas {
   margin-right: 8px;
 }
 
-/* ── Backup banner ──────────────────────────────────────── */
-#backupBanner {
-  border-radius: var(--r-sm);
-  padding: 12px 16px;
-  display: none;
-  gap: 12px;
-  align-items: center;
-  background: rgba(255,201,71,.07);
-  border: 1px solid rgba(255,201,71,.25);
-  color: var(--amber);
-  font-size: .85rem;
-  margin: 10px 0;
-}
-
 /* ── Toast notifications ─────────────────────────────────── */
 #toast-container {
   position: fixed;
@@ -917,6 +823,18 @@ canvas {
 .toast-body { flex: 1; }
 .toast-title { font-weight: 700; color: var(--text); margin-bottom: 2px; }
 .toast-msg   { color: var(--text-3); font-size: .78rem; line-height: 1.4; }
+.toast-action {
+  align-self: center;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: .78rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent-2);
+  box-shadow: none;
+}
+.toast-action:hover { background: rgba(124,77,255,.15); box-shadow: none; filter: none; }
 
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(12px) scale(.96); }
@@ -926,143 +844,6 @@ canvas {
 @keyframes toastOut {
   to   { opacity: 0; transform: translateY(6px) scale(.96); }
 }
-
-/* ── Gantt extras ────────────────────────────────────────── */
-#ganttWrap {
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  padding: 10px;
-  background: rgba(255,255,255,.015);
-  overflow: auto;
-}
-
-#ganttTooltip {
-  background: var(--surface-2) !important;
-  border: 1px solid var(--line) !important;
-  color: var(--text) !important;
-  border-radius: var(--r-sm) !important;
-  font-family: 'Inter', sans-serif !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,.45) !important;
-  font-size: .82rem !important;
-  line-height: 1.5 !important;
-}
-
-#ganttAnalytics {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-  align-items: flex-start;
-}
-
-#ganttCatLegend {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 200px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: .82rem;
-  color: var(--text-2);
-}
-
-.legend-swatch {
-  width: 12px; height: 12px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-/* ── Login card ─────────────────────────────────────────── */
-#view-login {
-  max-width: 480px;
-  margin: 20px auto;
-}
-
-#view-login h2 {
-  margin-bottom: 18px;
-}
-
-/* ── Animations ─────────────────────────────────────────── */
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* ── Utilities ──────────────────────────────────────────── */
-.hidden { display: none !important; }
-
-.mono { font-family: 'JetBrains Mono', monospace; }
-
-.flex-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.section-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-
-/* ── Scrollbar ──────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-soft); }
-::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-/* ── Footer ─────────────────────────────────────────────── */
-.footer {
-  text-align: center;
-  color: var(--text-disabled);
-  font-size: .72rem;
-  margin-top: 24px;
-  letter-spacing: .02em;
-}
-
-/* ── Responsive ─────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .header { flex-direction: column; align-items: flex-start; }
-  .day-progress-bar { width: 100%; }
-  h1 { font-size: 1.2rem; }
-  .kpi-row { grid-template-columns: 1fr 1fr; }
-}
-
-/* ── Édition inline d'une tâche ───────────────────────────── */
-.task-editing {
-  background: rgba(124,77,255,.08);
-  border: 1px solid var(--accent-glow);
-  border-radius: var(--r-sm);
-  padding: 8px 10px;
-}
-
-/* ── Dashboard ─────────────────────────────────────────────── */
-#dashboardCharts {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-
-.dash-chart-box {
-  flex: 1 1 320px;
-  background: rgba(255,255,255,.02);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  padding: 16px;
-}
-
-#dashBarCanvas { width: 100%; height: auto; }
 
 /* ── Textareas (rapport) ──────────────────────────────────── */
 textarea {
@@ -1076,6 +857,85 @@ textarea {
   resize: vertical;
 }
 textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--shadow-glow); }
+
+/* ── Vue « Aujourd'hui » ──────────────────────────────────── */
+.today-block {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  background: rgba(255,255,255,.02);
+}
+html[data-theme="light"] .today-block { background: rgba(40,30,90,.02); }
+
+.today-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.today-total {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--cyan);
+}
+
+.today-task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.today-task:first-child { border-top: none; }
+.today-task-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .78rem;
+  color: var(--text-3);
+  min-width: 92px;
+  flex-shrink: 0;
+}
+.today-task-text { flex: 1; font-size: .9rem; word-break: break-word; }
+
+@media (max-width: 560px) {
+  .today-task { flex-wrap: wrap; gap: 6px; }
+  .today-task-time { min-width: 0; }
+  .today-task-text { flex-basis: 100%; }
+}
+
+/* ── Champ avec étiquette visible ─────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 130px;
+  min-width: 0;
+}
+.field > label {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: .01em;
+}
+.field > input, .field > select { width: 100%; }
+
+/* ── Bandeau de récupération (données illisibles) ─────────── */
+.recovery-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+  padding: 14px 18px;
+  border: 1px solid var(--red);
+  border-radius: var(--r-md);
+  background: rgba(255,77,109,.10);
+}
+.recovery-banner strong { font-size: .92rem; }
 
 /* ── Bandeau « tâche en cours » (visible sur tous les onglets) ── */
 .live-banner {
@@ -1185,18 +1045,54 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--s
   .tracker-timer { font-size: 1.9rem; }
   .tracker-actions { justify-content: center; }
 
-  /* Gantt / Dashboard : canvases scrollables horizontalement */
-  #ganttWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .dash-chart-box { padding: 12px; }
-
-  /* Connexion : occupe la largeur dispo */
-  .login-card { margin: 16px auto; padding: 26px 18px; max-width: 100%; }
-
   /* Le bouton flottant ne chevauche pas le bandeau */
   .fab { bottom: 18px; right: 16px; }
 }
 
 @media (max-width: 420px) {
   .kpi-row { grid-template-columns: 1fr; }
-  .user-name { display: none; }
+}
+
+/* Classe utilitaire pour les messages d'alerte discrets */
+.small-hint.amber { color: var(--amber); }
+
+/* ── Impression ───────────────────────────────────────────
+   On imprime le contenu utile : ni navigation, ni formulaires,
+   ni boutons — et sur fond blanc pour ne pas vider la cartouche. */
+@media print {
+  html[data-theme] {
+    --bg: #fff; --bg-soft: #fff;
+    --surface: #fff; --surface-2: #fff;
+    --text: #000; --text-2: #222; --text-3: #444;
+    --line: #ccc; --line-soft: #e5e5e5;
+  }
+  body { background: #fff !important; }
+  body::before { display: none !important; }
+
+  .tabs, .tabs-actions, .day-progress-wrap, .fab, #toast-container,
+  .live-banner, .quick-overlay, .recovery-banner, .section-actions,
+  .tracker-card, #rapportPanel, .footer,
+  .edit-btn, .del-btn, button { display: none !important; }
+
+  .card {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 0 12px !important;
+    padding: 0 !important;
+    break-inside: auto;
+  }
+  .card::before { display: none !important; }
+
+  /* Les formulaires de saisie n'ont pas de sens sur papier */
+  .row, .sep { display: none !important; }
+  #journalStats, #weekKPI, #monthKPI { display: flex !important; gap: 14px; }
+
+  .day-block { break-inside: avoid; }
+  .task { break-inside: avoid; border-bottom: 1px solid #ddd; }
+  .table { break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+
+  a[href]::after { content: ""; }
+  @page { margin: 14mm; }
 }

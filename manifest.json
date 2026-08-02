@@ -1,7 +1,8 @@
 {
-  "name": "Journal de Bord — Pro",
-  "short_name": "Journal de Bord",
-  "description": "Suivi d'activité, pointage et reporting d'alternance",
+  "id": "/journal-de-bord",
+  "name": "Journal de Bord",
+  "short_name": "Journal",
+  "description": "Journal d'activité, pointage et rapport d'alternance — 100 % hors ligne",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -9,10 +10,27 @@
   "background_color": "#0d0b1a",
   "theme_color": "#7c4dff",
   "lang": "fr",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities"],
   "icons": [
-    { "src": "fox.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "fox.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "fox.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "fox.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ajout rapide d'une tâche",
+      "short_name": "Ajout rapide",
+      "description": "Noter une tâche à l'instant, sans passer par le formulaire",
+      "url": "./index.html?action=ajout",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pointer la journée",
+      "short_name": "Pointage",
+      "description": "Saisir les heures d'arrivée, de pause et de départ",
+      "url": "./index.html?action=pointage",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }

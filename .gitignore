@@ -1,0 +1,15 @@
+# Données personnelles — journal, heures pointées, anciens identifiants.
+# Ne jamais publier : ce dossier contient de vraies données d'activité.
+Sauvegarde/
+*_backup*.json
+journal_donnees_brutes_*.json
+
+# Exports générés localement
+*.pdf
+*.csv
+
+# Système / outillage
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini
