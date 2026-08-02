@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Journal de Bord</title>
 
+  <!-- GitHub Pages ne permet pas de définir d'en-têtes HTTP : la politique de
+       sécurité passe donc par cette balise. L'application ne charge aucune
+       ressource externe, la règle peut être stricte. 'unsafe-inline' n'est
+       conservé que pour style-src, imposé par les attributs style= du HTML. -->
+  <!-- frame-ancestors est volontairement absent : cette directive n'a d'effet
+       qu'en en-tête HTTP et serait ignorée ici. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'" />
+
+  <meta name="description" content="Journal d'activité, pointage des heures et rapport d'alternance. Fonctionne hors ligne, les données restent sur l'appareil." />
+  <meta name="color-scheme" content="dark light" />
+
   <!-- PWA : installation sur téléphone -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#7c4dff" />
@@ -361,8 +372,9 @@
   </div>
 </div>
 
-<!-- Toasts -->
-<div id="toast-container"></div>
+<!-- Toasts : role=status pour que les messages d'erreur de saisie soient
+     restitués par une synthèse vocale sans voler le focus. -->
+<div id="toast-container" role="status" aria-live="polite"></div>
 
 <!-- Scripts -->
 <!-- jsPDF servi localement : les exports PDF doivent fonctionner hors ligne -->

@@ -95,6 +95,31 @@ function ymd(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/* new Date("2026-08-02") est interprété en UTC par la spécification, alors que
+   ymd() et le reste de l'application raisonnent en heure locale. Construire la
+   date explicitement évite le décalage d'un jour à l'ouest de Greenwich. */
+function parseYMD(s) {
+    const [y, m, d] = String(s).split("-").map(Number);
+    return new Date(y, (m || 1) - 1, d || 1);
+}
+
+/* Un <input type="date"> vidé renvoie une chaîne vide : sans garde, le tableau
+   et le PDF exporté se remplissaient de « Invalid Date » marqués jour férié. */
+const refSemaineValide = () => {
+    const v = qs("#weekRef")?.value || "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    const auj = ymd(new Date());
+    if (qs("#weekRef")) qs("#weekRef").value = auj;
+    return auj;
+};
+const refMoisValide = () => {
+    const v = qs("#monthRef")?.value || "";
+    if (/^\d{4}-\d{2}$/.test(v)) return v;
+    const auj = ymd(new Date()).slice(0, 7);
+    if (qs("#monthRef")) qs("#monthRef").value = auj;
+    return auj;
+};
+
 /* ── Jours fériés (France) ─────────────────────────────── */
 function easterDate(year) {
     // Algorithme de Meeus/Jones/Butcher
@@ -300,6 +325,26 @@ const getTolerance = () => getContrat().toleranceMin;
 /* Objectif net d'une journée ouvrée : la tolérance est déjà déduite du temps pointé. */
 const getObjectifJour = () => { const c = getContrat(); return c.objectifJourMin - c.toleranceMin; };
 
+/* Les totaux de jb_pointage sont figés avec la tolérance en vigueur au moment
+   de la saisie, alors que l'objectif est recalculé à chaque lecture. Changer la
+   tolérance sans reprendre les totaux laisserait les anciennes journées amputées
+   d'une déduction qui n'existe plus, tout en relevant la cible : double peine,
+   invisible, sur un chiffre remis à l'école. Les heures brutes étant conservées,
+   le rattrapage est exact. */
+function recalculerTotauxPointage(ancienneTolerance, nouvelleTolerance) {
+    const delta = ancienneTolerance - nouvelleTolerance;
+    if (!delta) return 0;
+    const p = getPoint();
+    let n = 0;
+    Object.keys(p).forEach(date => {
+        const r = p[date];
+        if (!r || !r.total) return;      // journée incomplète : rien à reprendre
+        r.total = Math.max(0, r.total + delta);
+        n++;
+    });
+    return setPoint(p) ? n : 0;
+}
+
 function initHeaderClock() {
     const dateEl = qs("#headerDate");
     const fillEl = qs("#dayProgressFill");
@@ -342,12 +387,16 @@ function applyTheme(theme) {
     const btn = qs("#themeToggleBtn");
     if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
 }
+/* localStorage peut lever une exception (navigation privée stricte, stockage
+   bloqué par la configuration du navigateur). Sans protection ici, tout le
+   démarrage de l'application avortait. */
 function initTheme() {
-    const saved = localStorage.getItem(LS_THEME) || "dark";
+    let saved = "dark";
+    try { saved = localStorage.getItem(LS_THEME) || "dark"; } catch { /* thème par défaut */ }
     applyTheme(saved);
     qs("#themeToggleBtn").onclick = () => {
         const next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
-        localStorage.setItem(LS_THEME, next);
+        try { localStorage.setItem(LS_THEME, next); } catch { /* préférence non mémorisée */ }
         applyTheme(next);
     };
 }
@@ -534,9 +583,15 @@ function stopTracker(auto = false) {
 
     const totalMin = Math.max(1, Math.round(trackerElapsedMs(t) / 60000));
     const startDate = new Date(t.sessions[0].start);
-    const endDate    = new Date(last.end);
     const fmt2 = n => String(n).padStart(2, "0");
-    const timeRange = `${fmt2(startDate.getHours())}:${fmt2(startDate.getMinutes())}-${fmt2(endDate.getHours())}:${fmt2(endDate.getMinutes())}`;
+
+    // La plage enregistrée doit valoir le temps réellement chronométré.
+    // En partant de l'heure de fin réelle, les pauses étaient comptées comme
+    // du travail dans tous les cumuls du journal.
+    const debutMin = startDate.getHours() * 60 + startDate.getMinutes();
+    const finMin   = Math.min(23 * 60 + 59, debutMin + totalMin);
+    const timeRange = `${fmt2(startDate.getHours())}:${fmt2(startDate.getMinutes())}-${fmt2(Math.floor(finMin / 60))}:${fmt2(finMin % 60)}`;
+    const avecPauses = t.sessions.length > 1;
 
     const journal = getJournal();
     journal[t.day] = journal[t.day] || [];
@@ -545,13 +600,14 @@ function stopTracker(auto = false) {
         timeRange,
         text: t.text,
         cat: t.cat,
-        notes: t.sessions.length > 1 ? `Suivi en direct — ${t.sessions.length} session(s) (pauses incluses).` : ""
+        notes: avecPauses
+            ? `Suivi en direct — ${t.sessions.length} sessions, ${hm(totalMin)} travaillées (pauses déduites, horaire de fin ajusté).`
+            : ""
     });
     setJournal(journal);
     setTrackerState(null);
     renderTrackerIdle();
-    renderJournal();
-    renderJournalStats();
+    rafraichirVuesTaches();   // la vue Aujourd'hui restait périmée après un arrêt depuis le bandeau
 
     toast(auto ? "Tâche arrêtée automatiquement" : "Tâche terminée ✅", `${t.text} — ${hm(totalMin)}`, "success");
 }
@@ -626,24 +682,24 @@ function initJournal() {
     let minuteurRecherche = null;
     qs("#searchText").oninput = () => {
         clearTimeout(minuteurRecherche);
-        minuteurRecherche = setTimeout(renderJournal, 180);
+        minuteurRecherche = setTimeout(rerendreDepuisFiltre, 180);
     };
-    qs("#filterCat").onchange  = renderJournal;
-    qs("#filterFrom").onchange = renderJournal;
-    qs("#filterTo").onchange   = renderJournal;
+    qs("#filterCat").onchange  = rerendreDepuisFiltre;
+    qs("#filterFrom").onchange = rerendreDepuisFiltre;
+    qs("#filterTo").onchange   = rerendreDepuisFiltre;
     qs("#clearFiltersBtn").onclick = () => {
         qs("#searchText").value = "";
         qs("#filterCat").value  = "";
         qs("#filterFrom").value = "";
         qs("#filterTo").value   = "";
-        renderJournal();
+        rerendreDepuisFiltre();
     };
 
     // Retire en un clic le filtre « aujourd'hui » appliqué au démarrage
     qs("#showAllBtn").onclick = () => {
         qs("#filterFrom").value = "";
         qs("#filterTo").value   = "";
-        renderJournal();
+        rerendreDepuisFiltre();
     };
 
     qs("#toggleRapportBtn").onclick = () => {
@@ -668,7 +724,7 @@ function initJournal() {
 
     qs("#sortOrder").onchange = () => {
         setSortOrder(qs("#sortOrder").value);
-        renderJournal();
+        rerendreDepuisFiltre();
     };
 
     qs("#exportJournalPdfBtn").onclick = exportJournalPdf;
@@ -878,7 +934,7 @@ function initToday() {
         show("journal");
         qs("#filterFrom").value = "";
         qs("#filterTo").value   = "";
-        renderJournal();
+        rerendreDepuisFiltre();
     };
     qs("#goToWeekBtn").onclick = () => show("pointage");
 
@@ -953,7 +1009,7 @@ function renderToday() {
         ligne.innerHTML = `
             <span class="today-task-time">${escapeHtml(t.timeRange || "—")}</span>
             <span class="today-task-text">${escapeHtml(t.text)}</span>
-            <span class="chip" style="background:${couleur}22;border-color:${couleur}55;color:${couleur};">${escapeHtml(t.cat || "Général")}</span>
+            <span class="chip" style="${stylePuceCat(t.cat)}">${escapeHtml(t.cat || "Général")}</span>
             <button class="btn-danger" style="padding:5px 9px;font-size:.72rem;"
                     aria-label="Supprimer : ${escapeHtml(t.text.slice(0, 40))}" title="Supprimer">✕</button>`;
         ligne.querySelector("button").onclick = () => supprimerTache(auj, t.id);
@@ -1032,16 +1088,43 @@ function ajouterTacheDepuisToday() {
     }
 }
 
-/* Couleur par catégorie (palette fixe + hash) */
-function colorForCat(cat) {
-    const palette = [
-        "#7c4dff","#00e5ff","#00e096","#ffc947",
-        "#ff4d6d","#ff6d00","#00b0ff","#69f0ae",
-        "#ea80fc","#ff6e40","#40c4ff","#ccff90"
-    ];
+/* Couleur par catégorie (palette fixe + hash).
+   Deux variantes par teinte : la version vive est lisible sur le fond
+   sombre, la version assombrie atteint 4,5:1 sur le fond clair. */
+/* Teintes claires établies par mesure du rendu réel : chacune atteint au
+   moins 4,6:1 sur le fond effectif de la puce en thème clair. */
+const PALETTE_CATS = [
+    { sombre: "#9d7aff", clair: "#3d00e6" },
+    { sombre: "#00e5ff", clair: "#007684" },
+    { sombre: "#00e096", clair: "#007a52" },
+    { sombre: "#ffc947", clair: "#8d6300" },
+    { sombre: "#ff637f", clair: "#d30026" },
+    { sombre: "#ff6d00", clair: "#b14c00" },
+    { sombre: "#00b0ff", clair: "#0072a5" },
+    { sombre: "#69f0ae", clair: "#0c7a45" },
+    { sombre: "#ea80fc", clair: "#b205d0" },
+    { sombre: "#ff6e40", clair: "#c83000" },
+    { sombre: "#40c4ff", clair: "#0072a5" },
+    { sombre: "#ccff90", clair: "#417900" }
+];
+
+function indexCat(cat) {
     let hash = 0;
-    for (let i = 0; i < cat.length; i++) hash = (hash * 31 + cat.charCodeAt(i)) >>> 0;
-    return palette[hash % palette.length];
+    const s = String(cat || "Général");
+    for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+    return hash % PALETTE_CATS.length;
+}
+
+function colorForCat(cat) {
+    return PALETTE_CATS[indexCat(cat)].sombre;
+}
+
+/* Attributs de style d'une puce de catégorie.
+   Les deux teintes sont posées en variables CSS : le changement de
+   thème est alors purement visuel, sans re-rendu de la liste. */
+function stylePuceCat(cat) {
+    const c = PALETTE_CATS[indexCat(cat)];
+    return `--c:${c.sombre};--c-clair:${c.clair}`;
 }
 
 function refreshCatSelect() {
@@ -1124,6 +1207,18 @@ function renderJournalStats() {
 let editingTask = null; // { day, id }
 
 /* Affichage journal */
+/* Nombre de jours montés dans #journalRoot. Remis au palier de départ dès que
+   le critère d'affichage change (filtre, tri, recherche). */
+const PAS_HISTORIQUE = 30;
+let joursAffiches = PAS_HISTORIQUE;
+
+/* À passer en gestionnaire partout où l'utilisateur change ce qu'il regarde :
+   la fenêtre doit repartir du début, sinon elle reste ouverte sur 300 jours. */
+function rerendreDepuisFiltre() {
+    joursAffiches = PAS_HISTORIQUE;
+    renderJournal();
+}
+
 function renderJournal() {
     const root    = qs("#journalRoot");
     const journal = getFilteredJournal();
@@ -1146,7 +1241,12 @@ function renderJournal() {
 
     root.innerHTML = "";
 
-    days.forEach(day => {
+    // Sans borne, deux ans d'alternance représentent ~28 000 nœuds reconstruits
+    // à CHAQUE rendu — ajout, suppression, tri, frappe dans la recherche. On ne
+    // monte qu'une fenêtre, étendue à la demande.
+    const visibles = days.slice(0, joursAffiches);
+
+    visibles.forEach(day => {
         const tasks   = journal[day];
         const block   = document.createElement("div");
         block.className = "day-block";
@@ -1210,7 +1310,7 @@ function renderJournal() {
             row.innerHTML = `
                 <div class="task-left" style="flex-direction:column; align-items:flex-start; gap:6px;">
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                        <span class="chip" style="background:${color}22;border-color:${color}55;color:${color};">${escapeHtml(task.cat || "Général")}</span>
+                        <span class="chip" style="${stylePuceCat(task.cat)}">${escapeHtml(task.cat || "Général")}</span>
                         ${task.timeRange ? `<span class="task-time">${escapeHtml(task.timeRange)}</span>` : ""}
                     </div>
                     <span class="task-text">${escapeHtml(task.text)}</span>
@@ -1248,6 +1348,16 @@ function renderJournal() {
 
         root.appendChild(block);
     });
+
+    const restants = days.length - visibles.length;
+    if (restants > 0) {
+        const plus = document.createElement("button");
+        plus.className = "btn-ghost";
+        plus.style.cssText = "display:block;margin:16px auto;";
+        plus.textContent = `Afficher ${Math.min(PAS_HISTORIQUE, restants)} jours de plus (${restants} restants)`;
+        plus.onclick = () => { joursAffiches += PAS_HISTORIQUE; renderJournal(); };
+        root.appendChild(plus);
+    }
 }
 
 /* Les tâches sont visibles dans deux vues : toute modification les rafraîchit. */
@@ -1446,7 +1556,7 @@ function savePoint() {
 }
 
 function weekDays(ref) {
-    const d   = new Date(ref);
+    const d   = parseYMD(ref);
     const day = (d.getDay() + 6) % 7;
     const mon = new Date(d);
     mon.setDate(d.getDate() - day);
@@ -1465,7 +1575,7 @@ function renderWeekKPI() {
     const kpiEl = qs("#weekKPI");
     if (!kpiEl) return;
 
-    const ref  = qs("#weekRef").value || ymd(new Date());
+    const ref  = refSemaineValide();
     const days = workDaysInWeek(ref);
     const p    = getPoint();
 
@@ -1473,7 +1583,11 @@ function renderWeekKPI() {
     let sum = 0, worked = 0;
     days.forEach(d => {
         const r = p[d];
-        if (r) { sum += (r.total || 0); worked++; }
+        if (!r) return;
+        sum += (r.total || 0);
+        // Un enregistrement vide ou un jour férié ne compte pas comme « pointé » :
+        // le KPI du mois applique déjà cette règle, celui de la semaine non.
+        if (r.total > 0 && !isHoliday(d)) worked++;
     });
 
     const target = workableDays.length * getObjectifJour();
@@ -1491,7 +1605,7 @@ function renderWeekKPI() {
 }
 
 function renderWeek() {
-    const ref   = qs("#weekRef").value;
+    const ref   = refSemaineValide();
     const days  = workDaysInWeek(ref);
     const p     = getPoint();
     const table = qs("#weekTable");
@@ -1516,9 +1630,9 @@ function renderWeek() {
 
         tr.innerHTML = `
             <td style="font-weight:600;">${fmtFR(d)} ${holiday ? `<span class="holiday-badge" title="${escapeHtml(holiday)}">🎌 Férié</span>` : ""}</td>
-            <td class="mono">${r.arrivee   || "—"}</td>
-            <td class="mono">${r.pauseDebut || "—"} – ${r.pauseFin || "—"}</td>
-            <td class="mono">${r.depart    || "—"}</td>
+            <td class="mono">${escapeHtml(r.arrivee)   || "—"}</td>
+            <td class="mono">${escapeHtml(r.pauseDebut) || "—"} – ${escapeHtml(r.pauseFin) || "—"}</td>
+            <td class="mono">${escapeHtml(r.depart)    || "—"}</td>
             <td class="time-mono ${min >= 420 ? "total-positive" : min > 0 ? "" : ""}">${min ? hm(min) : "—"}</td>`;
         tbody.appendChild(tr);
     });
@@ -1533,7 +1647,7 @@ function renderWeek() {
 }
 
 function renderMonth() {
-    const ref   = qs("#monthRef").value;
+    const ref   = refMoisValide();
     if (!ref) return;
     const [Y, M] = ref.split("-").map(Number);
     const last  = new Date(Y, M, 0).getDate();
@@ -1571,9 +1685,9 @@ function renderMonth() {
 
         tr.innerHTML = `
             <td style="font-weight:600;">${fmtFR(key)} ${holiday ? `<span class="holiday-badge" title="${escapeHtml(holiday)}">🎌 Férié</span>` : ""}</td>
-            <td class="mono">${r.arrivee    || "—"}</td>
-            <td class="mono">${r.pauseDebut || "—"} – ${r.pauseFin || "—"}</td>
-            <td class="mono">${r.depart     || "—"}</td>
+            <td class="mono">${escapeHtml(r.arrivee)    || "—"}</td>
+            <td class="mono">${escapeHtml(r.pauseDebut) || "—"} – ${escapeHtml(r.pauseFin) || "—"}</td>
+            <td class="mono">${escapeHtml(r.depart)     || "—"}</td>
             <td class="time-mono">${min ? hm(min) : "—"}</td>`;
         tbody.appendChild(tr);
     }
@@ -1599,14 +1713,14 @@ function renderMonth() {
 }
 
 function shiftWeek(n) {
-    const d = new Date(qs("#weekRef").value);
+    const d = parseYMD(refSemaineValide());
     d.setDate(d.getDate() + n);
     qs("#weekRef").value = ymd(d);
     renderWeek();
 }
 
 function shiftMonth(n) {
-    const [y, m] = qs("#monthRef").value.split("-").map(Number);
+    const [y, m] = refMoisValide().split("-").map(Number);
     const d = new Date(y, m - 1 + n, 1);
     qs("#monthRef").value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     renderMonth();
@@ -1631,9 +1745,9 @@ function exportPointagePdf(mode) {
 
     const p    = getPoint();
     const rows = mode === "week"
-        ? workDaysInWeek(qs("#weekRef").value).map(d => [d, p[d] || {}])
+        ? workDaysInWeek(refSemaineValide()).map(d => [d, p[d] || {}])
         : (() => {
-            const ref = qs("#monthRef").value;
+            const ref = refMoisValide();
             const [Y, M] = ref.split("-").map(Number);
             const last = new Date(Y, M, 0).getDate();
             return Array.from({ length: last }, (_, i) => {
@@ -1685,7 +1799,7 @@ function tasksInRange(journal, start, end) {
 }
 
 function getWeekRange(refDate) {
-    const d   = new Date(refDate);
+    const d   = parseYMD(refDate);
     const day = (d.getDay() + 6) % 7;
     const mon = new Date(d);
     mon.setDate(d.getDate() - day);
@@ -1695,7 +1809,7 @@ function getWeekRange(refDate) {
 }
 
 function getMonthRange(refDate) {
-    const d = new Date(refDate);
+    const d = parseYMD(refDate);
     return [ymd(new Date(d.getFullYear(), d.getMonth(), 1)), ymd(new Date(d.getFullYear(), d.getMonth() + 1, 0))];
 }
 
@@ -1916,10 +2030,18 @@ function initAdmin() {
         if (isNaN(tolerance) || tolerance < 0 || tolerance > 120) return toast("Tolérance invalide", "Entre 0 et 120 minutes.", "warn");
         if (tolerance >= objectif) return toast("Valeurs incohérentes", "La tolérance doit rester inférieure à l'objectif.", "warn");
 
+        const ancienneTolerance = getContrat().toleranceMin;
         setContrat({ objectifJourMin: objectif, toleranceMin: tolerance });
+        const reprises = recalculerTotauxPointage(ancienneTolerance, tolerance);
+
         majTexteCalcul();
-        renderWeek(); renderMonth(); renderWeekKPI();
-        toast("Contrat enregistré", `${hm(objectif)} par jour · ${tolerance} min de tolérance`, "success");
+        renderWeek(); renderMonth(); renderWeekKPI(); renderToday();
+        toast(
+            "Contrat enregistré",
+            `${hm(objectif)} par jour · ${tolerance} min de tolérance` +
+            (reprises ? ` — ${reprises} journée(s) recalculée(s) avec la nouvelle tolérance.` : ""),
+            "success", reprises ? 7000 : 3800
+        );
     };
 
     qs("#resetContratBtn").onclick = () => {
@@ -1949,7 +2071,7 @@ function renderAdmCats() {
         item.innerHTML = `
             <div style="display:flex;align-items:center;gap:10px;">
                 <span class="cat-color-dot" style="background:${color};"></span>
-                <span class="chip" style="background:${color}22;border-color:${color}55;color:${color};">${escapeHtml(cat)}</span>
+                <span class="chip" style="${stylePuceCat(cat)}">${escapeHtml(cat)}</span>
             </div>`;
 
         if (cat !== "Général") {
@@ -2043,7 +2165,11 @@ function rappelerSauvegardeSiBesoin() {
 /* ── Export CSV (tableur) ─────────────────────────────── */
 function versCSV(lignes) {
     const echapper = v => {
-        const s = String(v ?? "");
+        let s = String(v ?? "");
+        // Une cellule commençant par =, +, - ou @ est interprétée comme une
+        // formule par Excel et LibreOffice. Une description de tâche saisie
+        // ainsi deviendrait du code exécuté à l'ouverture du fichier.
+        if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
         return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     // point-virgule + BOM : Excel en configuration française ouvre le fichier directement
@@ -2093,7 +2219,10 @@ function exportPointageCsv() {
 function buildBackupObject() {
     return {
         cats: getCats(), journal: getJournal(),
-        pointage: getPoint(), sort: getSortOrder(), workHours: getWorkHours(), date: new Date().toISOString()
+        pointage: getPoint(), sort: getSortOrder(),
+        workHours: getWorkHours(),
+        contrat: getContrat(),   // sans quoi l'objectif et la tolérance étaient perdus à la restauration
+        date: new Date().toISOString()
     };
 }
 
@@ -2175,18 +2304,29 @@ function analyserSauvegarde(obj) {
         if (liste.length) { journal[jour] = liste; taches += liste.length; }
     });
 
+    // Ces valeurs sont réinjectées dans les tableaux Semaine et Mois : on
+    // n'accepte qu'un format d'heure strict, jamais une chaîne arbitraire.
+    const heureSure = v => (typeof v === "string" && /^([01]?\d|2[0-3]):[0-5]\d$/.test(v.trim())) ? v.trim() : "";
+
     const pointage = {};
     Object.keys(obj.pointage).forEach(jour => {
         const p = obj.pointage[jour];
         if (!estDate(jour) || !estDico(p)) { ignores++; return; }
-        pointage[jour] = {
-            arrivee:    typeof p.arrivee    === "string" ? p.arrivee    : "",
-            pauseDebut: typeof p.pauseDebut === "string" ? p.pauseDebut : "",
-            pauseFin:   typeof p.pauseFin   === "string" ? p.pauseFin   : "",
-            depart:     typeof p.depart     === "string" ? p.depart     : "",
-            total:      Number.isFinite(p.total) ? p.total : 0
+        const nettoye = {
+            arrivee:    heureSure(p.arrivee),
+            pauseDebut: heureSure(p.pauseDebut),
+            pauseFin:   heureSure(p.pauseFin),
+            depart:     heureSure(p.depart),
+            total:      Number.isFinite(p.total) && p.total >= 0 ? p.total : 0
         };
+        if (["arrivee","pauseDebut","pauseFin","depart"].some(k => p[k] && !nettoye[k])) ignores++;
+        pointage[jour] = nettoye;
     });
+
+    const contrat = (obj.contrat && Number.isFinite(obj.contrat.objectifJourMin) && Number.isFinite(obj.contrat.toleranceMin)
+        && obj.contrat.objectifJourMin > 0 && obj.contrat.toleranceMin >= 0)
+        ? { objectifJourMin: obj.contrat.objectifJourMin, toleranceMin: obj.contrat.toleranceMin }
+        : null;
 
     const cats = Array.isArray(obj.cats)
         ? [...new Set(["Général", ...obj.cats.filter(c => typeof c === "string" && c.trim())])]
@@ -2197,7 +2337,7 @@ function analyserSauvegarde(obj) {
         jours: Object.keys(journal).length,
         pointages: Object.keys(pointage).length,
         propre: {
-            journal, pointage, cats,
+            journal, pointage, cats, contrat,
             sort: obj.sort === "asc" ? "asc" : "desc",
             workHours: (obj.workHours && !isNaN(parseHM(obj.workHours.start)) && !isNaN(parseHM(obj.workHours.end)))
                 ? obj.workHours : null,
@@ -2215,9 +2355,11 @@ function applyBackup(obj, bilan) {
     const ok = setJournal(d.journal) && setPoint(d.pointage);
     setSortOrder(d.sort);
     if (d.workHours) setWorkHours(d.workHours.start, d.workHours.end);
+    if (d.contrat) setContrat(d.contrat);
 
     initJournal();
     initPointage();
+    initToday();      // la vue du jour affichait sinon les données d'avant l'import
     initAdmin();
 
     if (!ok) return toast("Restauration incomplète", "Le navigateur a refusé d'enregistrer toutes les données.", "error", 9000);
@@ -2233,14 +2375,33 @@ function applyBackup(obj, bilan) {
 
 console.log("✅ Journal de Bord — chargé");
 
-/* ── PWA : enregistrement du service worker ───────────── */
+/* ── PWA : enregistrement du service worker ─────────────
+   Une nouvelle version prenait le contrôle sans que la page soit rechargée :
+   l'utilisateur continuait d'exécuter l'ancien code jusqu'à fermer l'onglet.
+   On le lui signale, sans jamais recharger d'autorité — une saisie en cours
+   serait perdue. */
 if ("serviceWorker" in navigator) {
+    const avaitDejaUnControleur = !!navigator.serviceWorker.controller;
+
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-        console.log("✅ Nouvelle version du service worker active.");
+        if (!avaitDejaUnControleur) return;   // première installation : rien à signaler
+        toast(
+            "Nouvelle version disponible",
+            "Rechargez la page pour en bénéficier. Vos données ne sont pas affectées.",
+            "info", 20000,
+            { label: "Recharger", onClick: () => location.reload() }
+        );
     });
+
     window.addEventListener("load", () => {
         navigator.serviceWorker.register("./service-worker.js")
-            .then(() => console.log("✅ Service worker enregistré"))
+            .then(reg => {
+                console.log("✅ Service worker enregistré");
+                // Vérifie l'existence d'une mise à jour au retour sur l'onglet
+                document.addEventListener("visibilitychange", () => {
+                    if (document.visibilityState === "visible") reg.update().catch(() => {});
+                });
+            })
             .catch(err => console.warn("Service worker non enregistré :", err));
     });
 }

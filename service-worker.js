@@ -1,4 +1,4 @@
-const CACHE_NAME = "journal-cache-v43"; // ← incrémenter à chaque déploiement
+const CACHE_NAME = "journal-cache-v46"; // ← incrémenter à chaque déploiement
 
 /* Tout ce dont l'application a besoin pour démarrer et fonctionner sans réseau.
    jsPDF y figure : sans lui, les exports PDF échouaient hors ligne. */
@@ -22,16 +22,32 @@ self.addEventListener("install", e => {
   self.skipWaiting(); // active la nouvelle version sans attendre la fermeture des onglets
   e.waitUntil(
     caches.open(CACHE_NAME).then(c =>
-      // addAll échoue en bloc si une seule ressource manque : on tolère les absences
-      Promise.all(ASSETS.map(url => c.add(url).catch(err => console.warn("Non mis en cache :", url, err))))
+      // On tolère les absences (addAll échouerait en bloc), et surtout on force
+      // un aller réseau : cache.add() passe par le cache HTTP du navigateur et
+      // remplissait le nouveau cache avec les fichiers de la version précédente
+      // (GitHub Pages sert un max-age=600).
+      Promise.all(ASSETS.map(url =>
+        fetch(url, { cache: "reload" })
+          .then(rep => { if (rep.ok) return c.put(url, rep); throw new Error("HTTP " + rep.status); })
+          .catch(err => console.warn("Non mis en cache :", url, err))
+      ))
     )
   );
 });
 
+/* Le stockage de caches est partagé par toute l'origine : sur
+   *.github.io, d'autres projets du même compte y cohabitent. On ne
+   supprime donc QUE les caches portant notre propre préfixe — purger
+   tout ce qui n'est pas CACHE_NAME détruirait leurs données. */
+const PREFIXE_CACHE = "journal-cache-";
+
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(keys => Promise.all(
+        keys.filter(k => k.startsWith(PREFIXE_CACHE) && k !== CACHE_NAME)
+            .map(k => caches.delete(k))
+      ))
       .then(() => self.clients.claim()) // prend le contrôle des pages déjà ouvertes
   );
 });
