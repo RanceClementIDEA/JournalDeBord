@@ -210,6 +210,9 @@ html[data-theme="light"] body::before { opacity: .25; }
    (raccourci clavier « a » également). */
 
 /* ── Modale d'ajout rapide ────────────────────────────────── */
+/* Volontairement sans animation d'opacité : si le rendu est figé ou les
+   animations désactivées, l'overlay resterait invisible tout en captant les
+   clics — l'application paraîtrait bloquée. Seul le panneau interne s'anime. */
 .quick-overlay {
   position: fixed;
   inset: 0;
@@ -219,9 +222,8 @@ html[data-theme="light"] body::before { opacity: .25; }
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: quickFade .18s ease;
+  opacity: 1;
 }
-@keyframes quickFade { from { opacity: 0; } to { opacity: 1; } }
 
 .quick-sheet {
   width: 100%;
@@ -1095,4 +1097,41 @@ html[data-theme="light"] .today-block { background: rgba(40,30,90,.02); }
 
   a[href]::after { content: ""; }
   @page { margin: 14mm; }
+}
+
+/* ── Utilitaires ──────────────────────────────────────────
+   Ces règles avaient été perdues lors du nettoyage du CSS mort.
+   .hidden en particulier est structurante : sans elle, toutes les
+   vues et la modale d'ajout rapide s'affichent en même temps. */
+.hidden { display: none !important; }
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.flex-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Édition d'une tâche dans l'historique */
+.task-editing {
+  background: rgba(124,77,255,.08);
+  border: 1px solid var(--accent-glow);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+}
+
+/* ── Mouvement réduit ─────────────────────────────────────
+   Respecte le réglage système, et garantit qu'aucun élément ne
+   reste coincé dans l'état initial d'une animation non jouée. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .quick-sheet { transform: none !important; }
+  .logo-ring { animation: none !important; }
 }
