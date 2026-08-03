@@ -1,4 +1,4 @@
-const CACHE_NAME = "journal-cache-v50"; // ← incrémenter à chaque déploiement
+const CACHE_NAME = "journal-cache-v51"; // ← incrémenter à chaque déploiement
 
 /* Tout ce dont l'application a besoin pour démarrer et fonctionner sans réseau.
    jsPDF y figure : sans lui, les exports PDF échouaient hors ligne. */

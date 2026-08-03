@@ -426,7 +426,7 @@ const LS_THEME = "jb_theme";
 function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
     const btn = qs("#themeToggleBtn");
-    if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
+    if (btn) btn.textContent = theme === "light" ? "◑" : "◐";
 }
 /* localStorage peut lever une exception (navigation privée stricte, stockage
    bloqué par la configuration du navigateur). Sans protection ici, tout le
@@ -1123,21 +1123,24 @@ function ajouterTacheDepuisToday() {
 /* Couleur par catégorie (palette fixe + hash).
    Deux variantes par teinte : la version vive est lisible sur le fond
    sombre, la version assombrie atteint 4,5:1 sur le fond clair. */
-/* Teintes claires établies par mesure du rendu réel : chacune atteint au
-   moins 4,6:1 sur le fond effectif de la puce en thème clair. */
+/* Douze teintes, deux variantes. Les luminosités ne sont volontairement PAS
+   égalisées : la luminance est le seul canal qui survive à une dichromatie,
+   et l'étaler en zigzag contre la rotation de teinte fait passer la
+   séparabilité de 1,8 à 5,0 ΔE00 pour un contraste identique.
+   Chaque teinte tient au moins 4,5:1 sur les cinq fonds où elle peut poser. */
 const PALETTE_CATS = [
-    { sombre: "#9d7aff", clair: "#3d00e6" },
-    { sombre: "#00e5ff", clair: "#007684" },
-    { sombre: "#00e096", clair: "#007a52" },
-    { sombre: "#ffc947", clair: "#8d6300" },
-    { sombre: "#ff637f", clair: "#d30026" },
-    { sombre: "#ff6d00", clair: "#b14c00" },
-    { sombre: "#00b0ff", clair: "#0072a5" },
-    { sombre: "#69f0ae", clair: "#0c7a45" },
-    { sombre: "#ea80fc", clair: "#b205d0" },
-    { sombre: "#ff6e40", clair: "#c83000" },
-    { sombre: "#40c4ff", clair: "#0072a5" },
-    { sombre: "#ccff90", clair: "#417900" }
+    { sombre: "#7DCEFF", clair: "#004C6C" },
+    { sombre: "#53CCDF", clair: "#006774" },
+    { sombre: "#40B3AC", clair: "#004A47" },
+    { sombre: "#84D0AA", clair: "#00623F" },
+    { sombre: "#90B177", clair: "#437026" },
+    { sombre: "#A39A5C", clair: "#444100" },
+    { sombre: "#F1BF8D", clair: "#7F4E0B" },
+    { sombre: "#EEA58C", clair: "#803118" },
+    { sombre: "#FFBBBC", clair: "#8E2938" },
+    { sombre: "#E29DC8", clair: "#77225D" },
+    { sombre: "#AE92CC", clair: "#62428A" },
+    { sombre: "#8AAEEA", clair: "#0063AC" }
 ];
 
 function indexCat(cat) {
@@ -1581,7 +1584,7 @@ function exportRapportAlternancePdf() {
     let y = 0;
 
     /* ── Bandeau d'en-tête ── */
-    const [ar, ag, ab] = hexToRgb("#7c4dff");
+    const [ar, ag, ab] = hexToRgb("#1F5C9B");
     pdf.setFillColor(ar, ag, ab);
     pdf.rect(0, 0, pageW, 38, "F");
     pdf.setTextColor(255, 255, 255);
@@ -1601,7 +1604,7 @@ function exportRapportAlternancePdf() {
     if (missions) {
         checkPage(20);
         pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
-        pdf.setTextColor(124, 77, 255);
+        pdf.setTextColor(31, 92, 155);
         pdf.text("Missions / Contexte", margin, y); y += 6;
         pdf.setTextColor(0, 0, 0);
         pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
@@ -1613,7 +1616,7 @@ function exportRapportAlternancePdf() {
 
     checkPage(28);
     pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
-    pdf.setTextColor(124, 77, 255);
+    pdf.setTextColor(31, 92, 155);
     pdf.text("Synthèse", margin, y); y += 7;
     pdf.setTextColor(0, 0, 0);
     pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
@@ -1624,7 +1627,7 @@ function exportRapportAlternancePdf() {
     /* ── Répartition par catégorie ── */
     checkPage(12 + Object.keys(byCat).length * 6);
     pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
-    pdf.setTextColor(124, 77, 255);
+    pdf.setTextColor(31, 92, 155);
     pdf.text("Répartition par catégorie", margin, y); y += 7;
     pdf.setTextColor(0, 0, 0);
     pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
@@ -1642,7 +1645,7 @@ function exportRapportAlternancePdf() {
     /* ── Activités réalisées ── */
     checkPage(10);
     pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
-    pdf.setTextColor(124, 77, 255);
+    pdf.setTextColor(31, 92, 155);
     pdf.text("Activités réalisées", margin, y); y += 7;
     pdf.setTextColor(0, 0, 0);
 
@@ -1670,7 +1673,7 @@ function exportRapportAlternancePdf() {
     if (bilan) {
         checkPage(18);
         pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
-        pdf.setTextColor(124, 77, 255);
+        pdf.setTextColor(31, 92, 155);
         pdf.text("Compétences acquises / Bilan", margin, y); y += 7;
         pdf.setTextColor(0, 0, 0);
         pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);

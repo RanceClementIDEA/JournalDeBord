@@ -7,15 +7,33 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0d0b1a",
-  "theme_color": "#7c4dff",
+  "background_color": "#0F1214",
+  "theme_color": "#0F1214",
   "lang": "fr",
   "dir": "ltr",
-  "categories": ["productivity", "utilities"],
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
     {
@@ -23,14 +41,24 @@
       "short_name": "Ajout rapide",
       "description": "Noter une tâche à l'instant, sans passer par le formulaire",
       "url": "./index.html?action=ajout",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "name": "Pointer la journée",
-      "short_name": "Pointage",
-      "description": "Saisir les heures d'arrivée, de pause et de départ",
-      "url": "./index.html?action=pointage",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "name": "Feuille de route des projets",
+      "short_name": "Projets",
+      "description": "Ouvrir le planning et l'avancement des projets",
+      "url": "./index.html?action=projets",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
