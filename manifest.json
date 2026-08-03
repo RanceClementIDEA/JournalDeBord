@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Journal de Bord",
   "short_name": "Journal",
-  "description": "Journal d'activité, pointage et rapport d'alternance — 100 % hors ligne",
+  "description": "Journal d'activité, feuille de route et planning de projets — 100 % hors ligne",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

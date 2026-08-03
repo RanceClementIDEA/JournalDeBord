@@ -13,7 +13,7 @@
        qu'en en-tête HTTP et serait ignorée ici. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'" />
 
-  <meta name="description" content="Journal d'activité, pointage des heures et rapport d'alternance. Fonctionne hors ligne, les données restent sur l'appareil." />
+  <meta name="description" content="Journal d'activité, feuille de route et planning de projets. Fonctionne hors ligne, les données restent sur l'appareil." />
   <meta name="color-scheme" content="dark light" />
 
   <!-- PWA : installation sur téléphone -->
@@ -47,20 +47,11 @@
       </div>
     </div>
 
-    <!-- Barre de progression de la journée -->
-    <div class="day-progress-wrap" id="dayProgressWrap">
-      <div class="day-progress-label">Journée en cours</div>
-      <div class="day-progress-bar">
-        <div class="day-progress-fill" id="dayProgressFill" style="width:0%"></div>
-      </div>
-      <div class="day-progress-time" id="dayProgressTime">--:-- / --:--</div>
-    </div>
-
     <div class="tabs">
       <div class="tabs-nav" role="tablist" aria-label="Sections de l'application">
         <button id="tab-today"    class="tab active" role="tab" aria-selected="true"  aria-controls="view-today"><span aria-hidden="true">☀️</span> <span>Aujourd'hui</span></button>
         <button id="tab-journal"  class="tab"        role="tab" aria-selected="false" aria-controls="view-journal"><span aria-hidden="true">📔</span> <span>Historique</span></button>
-        <button id="tab-pointage" class="tab"        role="tab" aria-selected="false" aria-controls="view-pointage"><span aria-hidden="true">🕒</span> <span>Pointage</span></button>
+        <button id="tab-projets"  class="tab"        role="tab" aria-selected="false" aria-controls="view-projets"><span aria-hidden="true">🎯</span> <span>Projets</span></button>
         <button id="tab-admin"    class="tab"        role="tab" aria-selected="false" aria-controls="view-admin"><span aria-hidden="true">⚙️</span> <span>Réglages</span></button>
       </div>
 
@@ -90,55 +81,79 @@
     <button id="liveBannerStop" class="btn-ghost">⏹ Terminer</button>
   </div>
 
-  <!-- ─── AUJOURD'HUI ─────────────────────────────────────
-       Vue unique : le pointage de la journée et les tâches du jour.
-       Le stockage reste inchangé (jb_journal et jb_pointage séparés). -->
+  <!-- ─── AUJOURD'HUI ─────────────────────────────────── -->
   <section id="view-today" class="card">
     <h2>Aujourd'hui</h2>
     <p class="subtitle" id="todaySubtitle">Votre journée en un coup d'œil</p>
 
-    <!-- Bloc « ma journée » : reprend les champs de pointage -->
+    <!-- Bloc activités du jour -->
     <div class="today-block">
       <div class="today-block-head">
-        <h3 style="margin:0;">🕒 Ma journée</h3>
-        <span class="today-total" id="todayTotal">—</span>
-      </div>
-      <div class="row">
-        <div class="field"><label for="tArr">Arrivée</label><input type="time" id="tArr" /></div>
-        <div class="field"><label for="tPD">Pause début</label><input type="time" id="tPD" /></div>
-        <div class="field"><label for="tPF">Pause fin</label><input type="time" id="tPF" /></div>
-        <div class="field"><label for="tDep">Départ</label><input type="time" id="tDep" /></div>
-        <button id="todaySaveBtn">💾 Enregistrer</button>
-      </div>
-      <div class="section-actions" style="margin-top:8px;">
-        <button id="stampArrBtn" class="btn-ghost">▶️ Pointer l'arrivée</button>
-        <button id="stampPDBtn"  class="btn-ghost">☕ Début de pause</button>
-        <button id="stampPFBtn"  class="btn-ghost">🔙 Fin de pause</button>
-        <button id="stampDepBtn" class="btn-ghost">⏹ Pointer le départ</button>
-      </div>
-      <p class="small-hint" id="todayPointStatus"></p>
-    </div>
-
-    <!-- Bloc tâches du jour -->
-    <div class="today-block">
-      <div class="today-block-head">
-        <h3 style="margin:0;">✅ Mes tâches</h3>
+        <h3 style="margin:0;">✅ Mes activités</h3>
         <span class="today-total" id="todayTasksSummary">—</span>
       </div>
 
       <div class="row">
         <div class="field" style="flex:.6 1 120px;"><label for="todayTime">Horaire</label><input id="todayTime" placeholder="09:00-10:30" /></div>
-        <div class="field" style="flex:2 1 240px;"><label for="todayText">Tâche</label><input id="todayText" placeholder="Que venez-vous de faire ?" /></div>
-        <div class="field" style="flex:.8 1 140px;"><label for="todayCat">Catégorie</label><select id="todayCat"></select></div>
+        <div class="field" style="flex:2 1 240px;"><label for="todayText">Activité</label><input id="todayText" list="listeLibelles" placeholder="Que venez-vous de faire ?" autocomplete="off" /></div>
+        <div class="field" style="flex:.8 1 140px;"><label for="todayCat">Projet</label><select id="todayCat"></select></div>
         <button id="todayAddBtn">➕ Ajouter</button>
       </div>
+      <datalist id="listeLibelles"></datalist>
 
       <div id="todayTasksRoot"></div>
     </div>
 
+    <!-- Jalons à portée : les étapes des projets travaillés aujourd'hui -->
+    <div class="today-block hidden" id="todayJalonsBlock">
+      <div class="today-block-head">
+        <h3 style="margin:0;">🎯 Étapes à portée</h3>
+        <span class="today-total" id="todayJalonsSummary">—</span>
+      </div>
+      <p class="small-hint" style="margin-top:0;">Les étapes non terminées des projets sur lesquels vous avez travaillé aujourd'hui.</p>
+      <div id="todayJalonsRoot"></div>
+    </div>
+
     <div class="section-actions" style="margin-top:16px;">
       <button id="goToHistoryBtn" class="btn-ghost">🗓 Voir tout l'historique</button>
-      <button id="goToWeekBtn" class="btn-ghost">📅 Semaine et mois</button>
+      <button id="goToProjetsBtn" class="btn-ghost">🎯 Mes projets</button>
+    </div>
+  </section>
+
+  <!-- ─── PROJETS ─────────────────────────────────────── -->
+  <section id="view-projets" class="card hidden">
+    <h2>Projets</h2>
+    <p class="subtitle">Feuille de route, avancement et planning</p>
+
+    <div class="seg" role="group" aria-label="Mode d'affichage">
+      <button id="segListe" class="seg-btn actif" aria-pressed="true">📋 Liste</button>
+      <button id="segGantt" class="seg-btn" aria-pressed="false">📊 Planning</button>
+    </div>
+
+    <div id="projetsKPI" class="kpi-row" style="margin:14px 0;"></div>
+
+    <div id="ganttWrap" class="hidden">
+      <div class="gantt-barre">
+        <span class="small-hint" id="ganttInfo"></span>
+        <div class="seg seg-mini" role="group" aria-label="Échelle du planning">
+          <button class="seg-btn" data-echelle="j">Jour</button>
+          <button class="seg-btn" data-echelle="s">Semaine</button>
+          <button class="seg-btn" data-echelle="m">Mois</button>
+        </div>
+      </div>
+      <div id="ganttRoot"></div>
+      <div class="gantt-legende">
+        <span><i class="lg-plan"></i> Prévu</span>
+        <span><i class="lg-reel"></i> Réalisé</span>
+        <span><i class="lg-jalon"></i> Étape à faire</span>
+        <span><i class="lg-jalon fait"></i> Étape faite</span>
+      </div>
+    </div>
+
+    <div id="projetsRoot"></div>
+
+    <div class="section-actions" style="margin-top:16px;">
+      <button id="ajouterProjetBtn">➕ Nouveau projet</button>
     </div>
   </section>
 
@@ -242,88 +257,15 @@
 
     <div id="journalRoot"></div>
   </section>
-
-  <!-- ─── POINTAGE ────────────────────────────────────── -->
-  <section id="view-pointage" class="card hidden">
-    <h2>Pointage journalier</h2>
-    <p class="subtitle">Enregistrez vos heures de travail</p>
-
-    <div class="row">
-      <div class="field"><label for="pDate">Date</label><input type="date" id="pDate" /></div>
-      <div class="field"><label for="pArr">Arrivée</label><input type="time" id="pArr" /></div>
-      <div class="field"><label for="pPD">Pause début</label><input type="time" id="pPD" /></div>
-      <div class="field"><label for="pPF">Pause fin</label><input type="time" id="pPF" /></div>
-      <div class="field"><label for="pDep">Départ</label><input type="time" id="pDep" /></div>
-      <button id="savePointBtn">💾 Enregistrer</button>
-    </div>
-
-    <p id="pointageExistant" class="small-hint hidden" style="color:var(--amber);"></p>
-    <p class="small-hint" id="calculHint">Calcul : (Pause début − Arrivée) + (Départ − Pause fin) − tolérance</p>
-    <p class="small-hint">Les week-ends sont masqués des tableaux. Les jours fériés (calendrier français) sont repérés 🎌 et exclus de l'objectif.</p>
-
-    <!-- KPI semaine -->
-    <div id="weekKPI" class="kpi-row" style="margin-top:20px;"></div>
-
-    <div class="sep"></div>
-
-    <h3>Semaine</h3>
-    <div class="flex-row" style="margin-bottom:10px;">
-      <input type="date" id="weekRef" class="grow" style="flex:.5 1 140px;" />
-      <button id="prevWeek"     class="btn-ghost">⬅ -1</button>
-      <button id="nextWeek"     class="btn-ghost">+1 ➡</button>
-      <button id="exportWeekPdf"   class="btn-ghost">📄 PDF</button>
-    </div>
-    <table id="weekTable" class="table"></table>
-
-    <div class="sep"></div>
-
-    <h3>Mois</h3>
-    <div class="flex-row" style="margin-bottom:10px;">
-      <input type="month" id="monthRef" class="grow" style="flex:.5 1 140px;" />
-      <button id="prevMonth"      class="btn-ghost">⬅ -1</button>
-      <button id="nextMonth"      class="btn-ghost">+1 ➡</button>
-      <button id="exportMonthPdf"   class="btn-ghost">📄 PDF</button>
-    </div>
-    <div id="monthKPI" class="kpi-row" style="margin-bottom:14px;"></div>
-    <table id="monthTable" class="table"></table>
-  </section>
-
   <!-- ─── RÉGLAGES ────────────────────────────────────── -->
   <section id="view-admin" class="card hidden">
     <h2>Réglages</h2>
-    <p class="subtitle">Catégories, horaires et sauvegarde de vos données</p>
+    <p class="subtitle">Projets et sauvegarde de vos données</p>
 
-    <h3>Catégories</h3>
+    <h3>Projets</h3>
+    <p class="small-hint" style="margin-top:-6px;">Renommer un projet met à jour toutes les activités qui lui sont rattachées.</p>
     <div id="admCats" class="category-list"></div>
-    <p class="small-hint" style="margin-top:8px;">La catégorie « Général » est permanente.</p>
-
-    <div class="sep"></div>
-
-    <h3>Horaires de la journée</h3>
-    <p class="small-hint" style="margin-top:-6px;">Utilisés pour la barre de progression en haut de l'écran.</p>
-    <div class="row">
-      <input type="time" id="admWorkStart" class="grow" style="flex:.4 1 120px;" />
-      <input type="time" id="admWorkEnd"   class="grow" style="flex:.4 1 120px;" />
-      <button id="saveWorkHoursBtn">💾 Enregistrer</button>
-      <button id="resetWorkHoursBtn" class="btn-ghost">↩ Réinitialiser (08:00–18:00)</button>
-    </div>
-
-    <div class="sep"></div>
-
-    <h3>Contrat</h3>
-    <p class="small-hint" style="margin-top:-6px;">Servent au calcul du temps effectif et des pourcentages d'objectif.</p>
-    <div class="row">
-      <div class="field">
-        <label for="admObjectif">Objectif par jour ouvré</label>
-        <input type="time" id="admObjectif" />
-      </div>
-      <div class="field">
-        <label for="admTolerance">Tolérance déduite (minutes)</label>
-        <input type="number" id="admTolerance" min="0" max="120" step="1" />
-      </div>
-      <button id="saveContratBtn">💾 Enregistrer</button>
-      <button id="resetContratBtn" class="btn-ghost">↩ Réinitialiser (7h48 / 20 min)</button>
-    </div>
+    <p class="small-hint" style="margin-top:8px;">Le projet « Général » est permanent.</p>
 
     <div class="sep"></div>
 
@@ -340,7 +282,14 @@
     <p class="small-hint" style="margin-top:-6px;">Pour retravailler les données dans Excel ou LibreOffice. Ce format ne peut pas être réimporté.</p>
     <div class="section-actions">
       <button id="exportJournalCsvBtn" class="btn-ghost">📊 Journal en CSV</button>
-      <button id="exportPointageCsvBtn" class="btn-ghost">📊 Pointage en CSV</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <h3>Données archivées</h3>
+    <p id="archiveStatus" class="small-hint" style="margin-top:-6px;"></p>
+    <div class="section-actions">
+      <button id="exportPointageCsvBtn" class="btn-ghost">📊 Exporter l'ancien pointage en CSV</button>
     </div>
 
     <input id="backupFileInput" type="file" accept="application/json" style="display:none" />
@@ -380,6 +329,8 @@
 <!-- jsPDF servi localement : les exports PDF doivent fonctionner hors ligne -->
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="app.js"></script>
+<script src="projets.js"></script>
+<script src="gantt.js"></script>
 
 </body>
 </html>

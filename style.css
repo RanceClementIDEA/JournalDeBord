@@ -1192,3 +1192,128 @@ html[data-theme="light"] .today-block { background: rgba(40,30,90,.02); }
   .quick-sheet { transform: none !important; }
   .logo-ring { animation: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PROJETS
+═══════════════════════════════════════════════════════════ */
+.seg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; }
+.seg-btn {
+  background: transparent; border: none; box-shadow: none;
+  color: var(--text-2); font-weight: 600; font-size: .8rem;
+  padding: 7px 14px; border-radius: 999px; white-space: nowrap;
+}
+.seg-btn.actif { background: linear-gradient(135deg, var(--accent) 0%, #5c35cc 100%); color: #fff; }
+.seg-btn:disabled { opacity: .35; cursor: not-allowed; }
+.seg-btn:hover:not(.actif):not(:disabled) { background: var(--line-soft); box-shadow: none; filter: none; color: var(--text); }
+.seg-mini .seg-btn { padding: 5px 10px; font-size: .72rem; }
+
+.projet-carte {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,.02);
+}
+html[data-theme="light"] .projet-carte { background: rgba(40,30,90,.02); }
+.projet-carte.en-retard { border-color: var(--red); }
+
+.projet-tete {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: transparent; border: none; box-shadow: none; padding: 0;
+  color: var(--text); text-align: left; flex-wrap: wrap;
+}
+.projet-tete:hover { background: transparent; box-shadow: none; filter: none; }
+.projet-meta { font-size: .76rem; color: var(--text-3); flex: 1; }
+.projet-chevron { color: var(--text-3); font-size: .8rem; }
+
+.projet-avance { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.barre-avance { flex: 1; height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+.barre-avance-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--cyan)); }
+.projet-pct { font-family: 'JetBrains Mono', monospace; font-size: .8rem; font-weight: 600; color: var(--text-2); min-width: 38px; text-align: right; }
+.projet-periode { margin-top: 6px; }
+
+.projet-detail { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.projet-sous-titre { font-size: .85rem; font-weight: 700; color: var(--text-2); margin: 14px 0 8px; }
+
+.jalon { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line-soft); flex-wrap: wrap; }
+.jalon:first-child { border-top: none; }
+.jalon-coche {
+  width: 26px; height: 26px; flex-shrink: 0; padding: 0;
+  border-radius: 7px; border: 1.5px solid var(--line);
+  background: transparent; color: var(--green);
+  font-size: .8rem; box-shadow: none;
+}
+.jalon.fait .jalon-coche { border-color: var(--green); background: rgba(0,224,150,.14); }
+.jalon.fait .jalon-texte { color: var(--text-3); text-decoration: line-through; }
+.jalon.retard .jalon-date { color: var(--red); font-weight: 600; }
+.jalon-texte { flex: 1; font-size: .86rem; min-width: 120px; }
+.jalon-date { flex-shrink: 0; margin: 0; }
+.jalon-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.jalon-actions button { padding: 4px 8px; font-size: .72rem; }
+.jalon-actions button:disabled { opacity: .3; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════
+   PLANNING (Gantt) — grille fractionnaire, jamais de scroll latéral
+═══════════════════════════════════════════════════════════ */
+.gantt-barre { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.gantt { display: flex; flex-direction: column; gap: 3px; }
+
+.g-ligne { display: flex; align-items: center; gap: 10px; border-radius: 6px; }
+.g-ligne[data-sujet] { cursor: pointer; padding: 3px 0; }
+.g-ligne[data-sujet]:hover { background: var(--line-soft); }
+
+.g-nom { width: 140px; flex-shrink: 0; overflow: hidden; }
+.g-nom .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+/* Les colonnes sont fractionnaires : la piste ne peut pas déborder. */
+.g-piste {
+  position: relative; flex: 1; min-width: 0; height: 26px;
+  display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  align-items: center;
+}
+.g-entete { font-size: .64rem; color: var(--text-3); }
+.g-entete .g-piste { height: 18px; }
+.g-lab { grid-row: 1; font-family: 'JetBrains Mono', monospace; font-size: .62rem; text-align: left; overflow: hidden; white-space: nowrap; }
+
+.g-fond { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); height: 100%; }
+.g-fond i { grid-row: 1; height: 100%; }
+.g-fond i.we, .g-fond i.ferie { background: rgba(255,255,255,.035); }
+html[data-theme="light"] .g-fond i.we, html[data-theme="light"] .g-fond i.ferie { background: rgba(40,30,90,.05); }
+.g-fond i.sep { border-left: 1px solid var(--line); }
+.g-fond i.today { background: rgba(124,77,255,.20); }
+
+.g-plan {
+  grid-row: 1; height: 22px; border-radius: 5px;
+  border: 1px dashed var(--text-3); background: rgba(255,255,255,.04);
+}
+.g-plan.depasse { border-color: var(--red); background: rgba(255,77,109,.10); }
+
+.g-reel {
+  grid-row: 1; height: 12px; border-radius: 999px;
+  background: var(--c, var(--accent));
+}
+html[data-theme="light"] .g-reel { background: var(--c-clair, var(--accent)); }
+
+.g-jalon {
+  grid-row: 1; justify-self: center; width: 9px; height: 9px;
+  transform: rotate(45deg); border: 1.5px solid var(--text-2); background: var(--surface);
+}
+.g-jalon.fait   { background: var(--green); border-color: var(--green); }
+.g-jalon.retard { background: var(--red);   border-color: var(--red); }
+
+.gantt-legende { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: .72rem; color: var(--text-3); }
+.gantt-legende i { display: inline-block; width: 16px; height: 8px; margin-right: 5px; vertical-align: middle; border-radius: 999px; }
+.gantt-legende .lg-plan { border: 1px dashed var(--text-3); background: transparent; height: 10px; border-radius: 3px; }
+.gantt-legende .lg-reel { background: var(--accent); }
+.gantt-legende .lg-jalon { width: 9px; height: 9px; border-radius: 0; transform: rotate(45deg); border: 1.5px solid var(--text-2); background: var(--surface); }
+.gantt-legende .lg-jalon.fait { background: var(--green); border-color: var(--green); }
+
+/* Sur petit écran le nom passe AU-DESSUS de la piste : le Gantt change
+   de forme au lieu de rétrécir, et rien ne défile latéralement. */
+@media (max-width: 780px) {
+  .g-ligne { flex-direction: column; align-items: stretch; gap: 2px; margin-bottom: 6px; }
+  .g-nom { width: auto; }
+  .g-entete { flex-direction: row; }
+  .g-entete .g-nom { display: none; }
+  .g-piste { height: 22px; }
+}

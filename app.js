@@ -103,22 +103,6 @@ function parseYMD(s) {
     return new Date(y, (m || 1) - 1, d || 1);
 }
 
-/* Un <input type="date"> vidé renvoie une chaîne vide : sans garde, le tableau
-   et le PDF exporté se remplissaient de « Invalid Date » marqués jour férié. */
-const refSemaineValide = () => {
-    const v = qs("#weekRef")?.value || "";
-    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
-    const auj = ymd(new Date());
-    if (qs("#weekRef")) qs("#weekRef").value = auj;
-    return auj;
-};
-const refMoisValide = () => {
-    const v = qs("#monthRef")?.value || "";
-    if (/^\d{4}-\d{2}$/.test(v)) return v;
-    const auj = ymd(new Date()).slice(0, 7);
-    if (qs("#monthRef")) qs("#monthRef").value = auj;
-    return auj;
-};
 
 /* ── Jours fériés (France) ─────────────────────────────── */
 function easterDate(year) {
@@ -237,6 +221,72 @@ const getAuthorName = () => lireJSON("jb_creds", {})?.username || DEFAULT_AUTHOR
 
 const getCats     = () => { const v = lireJSON(LS.CATS, DEFAULT_CATS); return Array.isArray(v) && v.length ? v : DEFAULT_CATS; };
 const setCats     = arr => ecrireJSON(LS.CATS, arr);
+
+/* ── Sujets ───────────────────────────────────────────────────
+   Un « sujet » est l'ancienne catégorie promue : c'est ce SUR QUOI on
+   travaille. L'identité est le nom lui-même — la jointure avec le journal
+   se fait par `entree.cat === sujet.nom`. Volontairement pas d'identifiant :
+   un id cassé est irrécupérable à la main, un nom se relit dans le JSON.
+
+   Trois champs seulement sont saisis, et une seule fois : debut, fin, jalons.
+   Tout le reste — avancement, temps passé, barre du Gantt, dernière activité —
+   est DÉRIVÉ du journal à chaque rendu, donc rien ne peut se désynchroniser. */
+const LS_SUJETS = "jb_sujets";
+
+function getSujets() {
+    const v = lireJSON(LS_SUJETS, null);
+    if (!v || !Array.isArray(v.liste)) return [];
+    return v.liste.filter(s => s && typeof s.nom === "string" && s.nom);
+}
+
+/* jb_cats est maintenu en miroir : une sauvegarde v2 reste lisible par la v1,
+   et si la migration dérape, les catégories d'origine sont toujours là. */
+function setSujets(liste) {
+    const ok = ecrireJSON(LS_SUJETS, { v: 2, liste });
+    if (ok) setCats(liste.map(s => s.nom));
+    return ok;
+}
+
+const getSujet = nom => getSujets().find(s => s.nom === nom) || null;
+
+function majSujet(nom, modif) {
+    const liste = getSujets();
+    const i = liste.findIndex(s => s.nom === nom);
+    if (i < 0) return false;
+    liste[i] = { ...liste[i], ...modif };
+    return setSujets(liste);
+}
+
+const sujetVierge = nom => ({ nom, actif: true, debut: "", fin: "", jalons: [] });
+
+/* Migration idempotente, jouée à chaque démarrage.
+   Elle ne réécrit jamais le journal : les 186 entrées existantes gardent leur
+   champ `cat` tel quel. Elle se contente de garantir qu'un sujet existe pour
+   chaque valeur de `cat` rencontrée — y compris celles dont la catégorie avait
+   été supprimée dans les Réglages de la v1, qui étaient devenues invisibles. */
+function migrerVersSujets() {
+    const existants = getSujets();
+    const connus = new Set(existants.map(s => s.nom));
+
+    const rencontres = new Set();
+    Object.values(getJournal()).forEach(liste =>
+        (liste || []).forEach(t => rencontres.add((t && t.cat) || "Général"))
+    );
+    getCats().forEach(c => rencontres.add(c));
+
+    const manquants = [...rencontres].filter(n => n && !connus.has(n));
+    if (!existants.length) {
+        // Premier passage : on crée tout, dans l'ordre des catégories déclarées
+        const ordre = [...getCats().filter(c => rencontres.has(c)),
+                       ...[...rencontres].filter(c => !getCats().includes(c))];
+        return setSujets(ordre.map(sujetVierge));
+    }
+    if (manquants.length) {
+        // Filet permanent : un `cat` orphelin fait réapparaître son sujet
+        return setSujets([...existants, ...manquants.map(sujetVierge)]);
+    }
+    return true;
+}
 const getJournal  = () => { const v = lireJSON(LS.JOURNAL, {}); return (v && typeof v === "object" && !Array.isArray(v)) ? v : {}; };
 const setJournal  = obj => ecrireJSON(LS.JOURNAL, obj);
 const getPoint    = () => { const v = lireJSON(LS.POINT, {}); return (v && typeof v === "object" && !Array.isArray(v)) ? v : {}; };
@@ -281,6 +331,41 @@ function reparerStockage() {
     location.reload();
 }
 
+/* ── Métriques dérivées d'un sujet ────────────────────────────
+   Rien de ceci n'est stocké : tout se recalcule depuis le journal, ce qui
+   garantit qu'aucun chiffre affiché ne peut mentir après trois semaines. */
+function statsSujet(nom, journal) {
+    journal = journal || getJournal();
+    let premiere = "", derniere = "", entrees = 0, minutes = 0;
+
+    Object.keys(journal).sort().forEach(jour => {
+        (journal[jour] || []).forEach(t => {
+            if ((t.cat || "Général") !== nom) return;
+            entrees++;
+            if (!premiere) premiere = jour;
+            derniere = jour;
+            const p = parsePlage(t.timeRange);
+            if (p) minutes += p.duree;
+        });
+    });
+
+    const s = getSujet(nom) || sujetVierge(nom);
+    const jalons = s.jalons || [];
+    const faits = jalons.filter(j => j.f).length;
+
+    return {
+        nom, actif: s.actif !== false,
+        debut: s.debut || "", fin: s.fin || "",
+        premiere, derniere, entrees, minutes,
+        jalons: jalons.length, faits,
+        // L'avancement vient des jalons s'il y en a ; sinon il n'est pas inventé.
+        avancement: jalons.length ? Math.round((faits / jalons.length) * 100) : null,
+        joursDepuis: derniere ? Math.floor((parseYMD(ymd(new Date())) - parseYMD(derniere)) / 86400000) : null,
+        // Une échéance dépassée avec des jalons restants = retard réel
+        enRetard: !!(s.fin && s.fin < ymd(new Date()) && jalons.length && faits < jalons.length)
+    };
+}
+
 /* ── Navigation ──────────────────────────────────────── */
 function show(view) {
     qsa("section").forEach(s => s.classList.add("hidden"));
@@ -321,63 +406,19 @@ function getContrat() {
     };
 }
 const setContrat = c => ecrireJSON(LS_CONTRAT, c);
-const getTolerance = () => getContrat().toleranceMin;
-/* Objectif net d'une journée ouvrée : la tolérance est déjà déduite du temps pointé. */
-const getObjectifJour = () => { const c = getContrat(); return c.objectifJourMin - c.toleranceMin; };
 
-/* Les totaux de jb_pointage sont figés avec la tolérance en vigueur au moment
-   de la saisie, alors que l'objectif est recalculé à chaque lecture. Changer la
-   tolérance sans reprendre les totaux laisserait les anciennes journées amputées
-   d'une déduction qui n'existe plus, tout en relevant la cible : double peine,
-   invisible, sur un chiffre remis à l'école. Les heures brutes étant conservées,
-   le rattrapage est exact. */
-function recalculerTotauxPointage(ancienneTolerance, nouvelleTolerance) {
-    const delta = ancienneTolerance - nouvelleTolerance;
-    if (!delta) return 0;
-    const p = getPoint();
-    let n = 0;
-    Object.keys(p).forEach(date => {
-        const r = p[date];
-        if (!r || !r.total) return;      // journée incomplète : rien à reprendre
-        r.total = Math.max(0, r.total + delta);
-        n++;
-    });
-    return setPoint(p) ? n : 0;
-}
 
 function initHeaderClock() {
     const dateEl = qs("#headerDate");
-    const fillEl = qs("#dayProgressFill");
-    const timeEl = qs("#dayProgressTime");
+    if (!dateEl) return;
 
-    function tick() {
-        const now = new Date();
-        if (dateEl) {
-            dateEl.textContent = now.toLocaleDateString("fr-FR", {
-                weekday: "long", day: "numeric", month: "long", year: "numeric"
-            });
-        }
-
-        // Progression de la journée de travail (configurable dans Admin)
-        const wh = getWorkHours();
-        const workStart = parseHM(wh.start);
-        const workEnd   = parseHM(wh.end);
-        const currentMin = now.getHours() * 60 + now.getMinutes();
-        const pct = (isNaN(workStart) || isNaN(workEnd) || workEnd <= workStart)
-            ? 0
-            : Math.min(100, Math.max(0, ((currentMin - workStart) / (workEnd - workStart)) * 100));
-
-        if (fillEl) fillEl.style.width = pct.toFixed(1) + "%";
-        if (timeEl) {
-            timeEl.textContent =
-                String(now.getHours()).padStart(2, "0") + ":" +
-                String(now.getMinutes()).padStart(2, "0") +
-                " · " + pct.toFixed(0) + "% journée (" + wh.start + "–" + wh.end + ")";
-        }
-    }
-
+    const tick = () => {
+        dateEl.textContent = new Date().toLocaleDateString("fr-FR", {
+            weekday: "long", day: "numeric", month: "long", year: "numeric"
+        });
+    };
     tick();
-    setInterval(tick, 30000);
+    setInterval(tick, 60000);
 }
 
 /* ── Thème clair/sombre ──────────────────────────────── */
@@ -422,6 +463,9 @@ document.addEventListener("DOMContentLoaded", () => {
     qs("#recoveryExportBtn").onclick = telechargerDonneesBrutes;
     qs("#recoveryRepairBtn").onclick = reparerStockage;
 
+    // Avant tout rendu : garantit qu'un sujet existe pour chaque `cat` du journal
+    migrerVersSujets();
+
     initQuickAdd();
     initRaccourcisClavier();
 
@@ -429,13 +473,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     qs("#tab-today").onclick    = () => { show("today"); renderToday(); };
     qs("#tab-journal").onclick  = () => show("journal");
-    qs("#tab-pointage").onclick = () => show("pointage");
+    qs("#tab-projets").onclick  = () => { show("projets"); renderProjets(); };
     qs("#tab-admin").onclick    = () => { show("admin"); initAdmin(); };
 
     // L'application s'ouvre sur la journée en cours
     initJournal();
-    initPointage();
     initToday();
+    initProjets();
     show("today");
 
     appliquerRaccourciPWA();
@@ -451,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function appliquerRaccourciPWA() {
     const action = new URLSearchParams(location.search).get("action");
     if (action === "ajout") openQuickAdd();
-    else if (action === "pointage") { show("pointage"); qs("#pArr").focus(); }
+    else if (action === "projets") { show("projets"); renderProjets(); }
     if (action) history.replaceState(null, "", location.pathname);
 }
 
@@ -888,7 +932,7 @@ function initRaccourcisClavier() {
             case "a": e.preventDefault(); openQuickAdd(); break;
             case "1": show("today"); renderToday(); break;
             case "2": show("journal"); break;
-            case "3": show("pointage"); break;
+            case "3": show("projets"); renderProjets(); break;
             case "4": show("admin"); initAdmin(); break;
             case "/": e.preventDefault(); show("journal"); qs("#searchText").focus(); break;
             case "?": afficherAideRaccourcis(); break;
@@ -915,20 +959,8 @@ function initToday() {
 
     qs("#todaySubtitle").textContent = fmtFR(auj).replace(/^./, c => c.toUpperCase());
 
-    qs("#todaySaveBtn").onclick = enregistrerPointageDuJourDepuisToday;
     qs("#todayAddBtn").onclick  = ajouterTacheDepuisToday;
     qs("#todayText").onkeydown  = e => { if (e.key === "Enter") ajouterTacheDepuisToday(); };
-
-    // Pointage en un clic : inscrit l'heure courante dans le champ correspondant
-    const tamponner = (selecteur) => () => {
-        const now = new Date();
-        qs(selecteur).value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-        enregistrerPointageDuJourDepuisToday(true);
-    };
-    qs("#stampArrBtn").onclick = tamponner("#tArr");
-    qs("#stampPDBtn").onclick  = tamponner("#tPD");
-    qs("#stampPFBtn").onclick  = tamponner("#tPF");
-    qs("#stampDepBtn").onclick = tamponner("#tDep");
 
     qs("#goToHistoryBtn").onclick = () => {
         show("journal");
@@ -936,7 +968,7 @@ function initToday() {
         qs("#filterTo").value   = "";
         rerendreDepuisFiltre();
     };
-    qs("#goToWeekBtn").onclick = () => show("pointage");
+    qs("#goToProjetsBtn").onclick = () => { show("projets"); renderProjets(); };
 
     renderToday();
 }
@@ -944,31 +976,7 @@ function initToday() {
 function renderToday() {
     const auj = ymd(new Date());
 
-    /* ── Pointage du jour ── */
-    const r = getPoint()[auj] || {};
-    qs("#tArr").value = r.arrivee    || "";
-    qs("#tPD").value  = r.pauseDebut || "";
-    qs("#tPF").value  = r.pauseFin   || "";
-    qs("#tDep").value = r.depart     || "";
-
-    const complet = r.arrivee && r.pauseDebut && r.pauseFin && r.depart;
-    qs("#todayTotal").textContent = complet ? hm(r.total || 0) : "—";
-
-    const statut = qs("#todayPointStatus");
-    if (complet) {
-        const objectif = getObjectifJour();
-        const ecart = (r.total || 0) - objectif;
-        statut.textContent = `Objectif du jour : ${hm(objectif)} · écart ${ecart >= 0 ? "+" : "−"}${hm(Math.abs(ecart))}`;
-        statut.className = "small-hint" + (ecart >= 0 ? "" : " amber");
-    } else if (r.arrivee) {
-        statut.textContent = "Journée commencée — complétez la pause et le départ pour obtenir le total.";
-        statut.className = "small-hint";
-    } else {
-        statut.textContent = "Aucun pointage aujourd'hui.";
-        statut.className = "small-hint";
-    }
-
-    /* ── Catégories ── */
+    /* ── Sujets ── */
     const sel = qs("#todayCat");
     const courant = sel.value;
     sel.innerHTML = "";
@@ -990,8 +998,11 @@ function renderToday() {
         ? `${taches.length} tâche${taches.length > 1 ? "s" : ""}${minutes ? " · " + hm(minutes) : ""}`
         : "—";
 
+    majDatalistLibelles();
+    renderJalonsAPortee(auj);
+
     if (!taches.length) {
-        racine.innerHTML = `<p class="small-hint" style="text-align:center;padding:18px 0;">Rien de noté aujourd'hui. Ajoutez votre première tâche ci-dessus.</p>`;
+        racine.innerHTML = `<p class="small-hint" style="text-align:center;padding:18px 0;">Rien de noté aujourd'hui. Ajoutez votre première activité ci-dessus.</p>`;
         return;
     }
 
@@ -1017,41 +1028,62 @@ function renderToday() {
     });
 }
 
-function enregistrerPointageDuJourDepuisToday(silencieux = false) {
-    const auj = ymd(new Date());
-    const valeurs = {
-        arrivee:    qs("#tArr").value,
-        pauseDebut: qs("#tPD").value,
-        pauseFin:   qs("#tPF").value,
-        depart:     qs("#tDep").value
-    };
+/* Les libellés se répètent beaucoup d'un jour à l'autre : proposer ceux
+   déjà employés évite de retaper, et surtout évite les quasi-doublons
+   qui feraient diverger un même travail en plusieurs intitulés. */
+function majDatalistLibelles() {
+    const dl = qs("#listeLibelles");
+    if (!dl) return;
+    const compte = {};
+    Object.values(getJournal()).flat().forEach(t => {
+        const s = (t.text || "").trim();
+        if (s) compte[s] = (compte[s] || 0) + 1;
+    });
+    dl.innerHTML = Object.keys(compte)
+        .sort((a, b) => compte[b] - compte[a])
+        .slice(0, 60)
+        .map(s => `<option value="${escapeHtml(s)}"></option>`).join("");
+}
 
-    const minutes = Object.values(valeurs).map(parseHM);
-    const complet = minutes.every(m => !isNaN(m));
+/* Sans ce bloc, personne ne retourne cocher une étape dans l'onglet Projets
+   et l'avancement se fige : on ne propose que les étapes des projets
+   effectivement travaillés dans la journée. */
+function renderJalonsAPortee(jour) {
+    const bloc = qs("#todayJalonsBlock");
+    const racine = qs("#todayJalonsRoot");
+    if (!bloc || !racine) return;
 
-    // Tant que la journée est incomplète, on conserve la saisie partielle
-    // sans calculer de total : pointer l'arrivée le matin doit fonctionner.
-    if (complet) {
-        const [A, PD, PF, D] = minutes;
-        if (!(A <= PD && PD <= PF && PF <= D)) {
-            return toast("Heures incohérentes", "Ordre attendu : arrivée ≤ pause début ≤ pause fin ≤ départ.", "error", 6000);
-        }
-        valeurs.total = Math.max(0, (PD - A) + (D - PF) - getTolerance());
-    } else {
-        valeurs.total = 0;
-    }
+    const travailles = new Set((getJournal()[jour] || []).map(t => t.cat || "Général"));
+    const candidats = [];
+    getSujets().filter(s => s.actif !== false && travailles.has(s.nom)).forEach(s => {
+        (s.jalons || []).forEach((j, i) => { if (!j.f) candidats.push({ sujet: s.nom, jalon: j, index: i }); });
+    });
 
-    const p = getPoint();
-    p[auj] = valeurs;
-    if (!setPoint(p)) return;
+    bloc.classList.toggle("hidden", !candidats.length);
+    if (!candidats.length) return;
 
-    renderToday();
-    renderWeek(); renderMonth(); renderWeekKPI();
-    if (qs("#pDate").value === auj) chargerPointageDuJour();
-
-    if (!silencieux) {
-        toast("Journée enregistrée", complet ? `${hm(valeurs.total)} de temps effectif` : "Saisie partielle conservée.", complet ? "success" : "info");
-    }
+    qs("#todayJalonsSummary").textContent = `${candidats.length} à faire`;
+    racine.innerHTML = "";
+    candidats.slice(0, 8).forEach(c => {
+        const enRetard = c.jalon.e && c.jalon.e < ymd(new Date());
+        const el = document.createElement("div");
+        el.className = "jalon" + (enRetard ? " retard" : "");
+        el.innerHTML = `
+            <button class="jalon-coche" role="checkbox" aria-checked="false"
+                    aria-label="Marquer comme terminée : ${escapeHtml(c.jalon.t)}"></button>
+            <span class="jalon-texte">${escapeHtml(c.jalon.t)}</span>
+            <span class="chip" style="${stylePuceCat(c.sujet)}">${escapeHtml(c.sujet)}</span>
+            <span class="jalon-date small-hint">${c.jalon.e ? "pour le " + fmtCourt(c.jalon.e) : ""}</span>`;
+        el.querySelector(".jalon-coche").onclick = () => {
+            const jalons = [...((getSujet(c.sujet) || {}).jalons || [])];
+            jalons[c.index] = { ...jalons[c.index], f: ymd(new Date()) };
+            if (majSujet(c.sujet, { jalons })) {
+                renderToday();
+                toast("Étape terminée ✅", c.jalon.t.slice(0, 50), "success");
+            }
+        };
+        racine.appendChild(el);
+    });
 }
 
 function ajouterTacheDepuisToday() {
@@ -1452,109 +1484,10 @@ function exportJournalPdf() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   POINTAGE
+   JOURS OUVRÉS ET FÉRIÉS
+   Seules survivances du pointage : le Gantt s'en sert pour griser les
+   week-ends et les jours fériés dans son calque de fond.
 ═══════════════════════════════════════════════════════ */
-function initPointage() {
-    const today = ymd(new Date());
-    qs("#pDate").value    = today;
-    qs("#weekRef").value  = today;
-    qs("#monthRef").value = today.slice(0, 7);
-
-    qs("#savePointBtn").onclick    = savePoint;
-    qs("#pDate").onchange          = chargerPointageDuJour;
-    chargerPointageDuJour();
-
-    qs("#prevWeek").onclick        = () => shiftWeek(-7);
-    qs("#nextWeek").onclick        = () => shiftWeek(+7);
-    qs("#prevMonth").onclick       = () => shiftMonth(-1);
-    qs("#nextMonth").onclick       = () => shiftMonth(+1);
-    qs("#exportWeekPdf").onclick   = () => exportPointagePdf("week");
-    qs("#exportMonthPdf").onclick  = () => exportPointagePdf("month");
-
-    majTexteCalcul();
-    renderWeek();
-    renderMonth();
-    renderWeekKPI();
-}
-
-/* Le texte d'aide du pointage reflète les valeurs réellement paramétrées. */
-function majTexteCalcul() {
-    const el = qs("#calculHint");
-    if (!el) return;
-    const c = getContrat();
-    el.textContent = `Calcul : (Pause début − Arrivée) + (Départ − Pause fin) − ${c.toleranceMin} min de tolérance · objectif ${hm(c.objectifJourMin)} par jour ouvré`;
-}
-
-/* Recharge le formulaire avec le pointage déjà enregistré pour la date choisie.
-   Sans cela, changer de date laissait les champs précédents et « Enregistrer »
-   écrasait silencieusement la journée. */
-function chargerPointageDuJour() {
-    const date = qs("#pDate").value;
-    const r = getPoint()[date] || {};
-    qs("#pArr").value = r.arrivee    || "";
-    qs("#pPD").value  = r.pauseDebut || "";
-    qs("#pPF").value  = r.pauseFin   || "";
-    qs("#pDep").value = r.depart     || "";
-
-    const dejaSaisi = qs("#pointageExistant");
-    if (dejaSaisi) {
-        dejaSaisi.classList.toggle("hidden", !r.arrivee);
-        if (r.arrivee) dejaSaisi.textContent = `Journée déjà enregistrée (${hm(r.total || 0)}) — modifier puis réenregistrer.`;
-    }
-}
-
-function savePoint() {
-    const date = qs("#pDate").value;
-    if (!date) return toast("Date manquante", "Choisissez la journée à pointer.", "warn");
-
-    const champs = [
-        ["Arrivée",     qs("#pArr").value],
-        ["Pause début", qs("#pPD").value],
-        ["Pause fin",   qs("#pPF").value],
-        ["Départ",      qs("#pDep").value]
-    ];
-    const invalides = champs.filter(([, v]) => isNaN(parseHM(v))).map(([n]) => n);
-    if (invalides.length) {
-        return toast("Heures invalides", `À corriger : ${invalides.join(", ")}. Format attendu : HH:MM (entre 00:00 et 23:59).`, "error", 6000);
-    }
-
-    const [A, PD, PF, D] = champs.map(([, v]) => parseHM(v));
-
-    // L'ordre doit être cohérent, sinon le total devient négatif et fausse tous les cumuls.
-    if (!(A <= PD && PD <= PF && PF <= D)) {
-        return toast(
-            "Heures incohérentes",
-            "L'ordre attendu est : arrivée ≤ pause début ≤ pause fin ≤ départ.",
-            "error", 6000
-        );
-    }
-
-    const total = (PD - A) + (D - PF) - getTolerance();
-    const p = getPoint();
-    p[date] = {
-        arrivee: qs("#pArr").value,
-        pauseDebut: qs("#pPD").value,
-        pauseFin: qs("#pPF").value,
-        depart: qs("#pDep").value,
-        total: Math.max(0, total)
-    };
-    if (!setPoint(p)) return;
-
-    renderWeek();
-    renderMonth();
-    renderWeekKPI();
-    chargerPointageDuJour();
-    renderToday();
-
-    if (isWeekendDate(date)) {
-        toast("Pointage enregistré", `${hm(total)} h le ${fmtFR(date)} — ⚠️ ce jour est un week-end, il n'apparaît pas dans les tableaux.`, "warn");
-    } else if (isHoliday(date)) {
-        toast("Pointage enregistré", `${hm(total)} h le ${fmtFR(date)} — 🎌 jour férié (${holidayLabel(date)}), exclu de l'objectif.`, "warn");
-    } else {
-        toast("Pointage enregistré", `${hm(total)} heures le ${fmtFR(date)}`, "success");
-    }
-}
-
 function weekDays(ref) {
     const d   = parseYMD(ref);
     const day = (d.getDay() + 6) % 7;
@@ -1565,222 +1498,6 @@ function weekDays(ref) {
         tmp.setDate(mon.getDate() + i);
         return ymd(tmp);
     });
-}
-
-/* Jours ouvrés (lun-ven) de la semaine, week-ends exclus */
-const workDaysInWeek = ref => weekDays(ref).filter(d => !isWeekendDate(d));
-
-/* KPI semaine */
-function renderWeekKPI() {
-    const kpiEl = qs("#weekKPI");
-    if (!kpiEl) return;
-
-    const ref  = refSemaineValide();
-    const days = workDaysInWeek(ref);
-    const p    = getPoint();
-
-    const workableDays = days.filter(d => !isHoliday(d));
-    let sum = 0, worked = 0;
-    days.forEach(d => {
-        const r = p[d];
-        if (!r) return;
-        sum += (r.total || 0);
-        // Un enregistrement vide ou un jour férié ne compte pas comme « pointé » :
-        // le KPI du mois applique déjà cette règle, celui de la semaine non.
-        if (r.total > 0 && !isHoliday(d)) worked++;
-    });
-
-    const target = workableDays.length * getObjectifJour();
-    const pct    = target ? Math.min(100, Math.round((sum / target) * 100)) : 0;
-    const avg    = worked ? Math.round(sum / worked) : 0;
-    const nbHolidays = days.length - workableDays.length;
-
-    kpiEl.innerHTML = `
-        <div class="kpi-box"><div class="kpi-val cyan">${hm(sum)}</div><div class="kpi-label">Total semaine</div></div>
-        <div class="kpi-box"><div class="kpi-val">${worked}/${workableDays.length}</div><div class="kpi-label">Jours pointés${nbHolidays ? " (hors fériés)" : ""}</div></div>
-        <div class="kpi-box"><div class="kpi-val ${pct >= 100 ? "green" : pct >= 80 ? "accent" : "red"}">${pct}%</div><div class="kpi-label">Objectif semaine</div></div>
-        <div class="kpi-box"><div class="kpi-val">${avg > 0 ? hm(avg) : "--:--"}</div><div class="kpi-label">Moy. / jour</div></div>
-        ${nbHolidays ? `<div class="kpi-box"><div class="kpi-val amber">${nbHolidays}</div><div class="kpi-label">Jour${nbHolidays > 1 ? "s" : ""} férié${nbHolidays > 1 ? "s" : ""}</div></div>` : ""}
-    `;
-}
-
-function renderWeek() {
-    const ref   = refSemaineValide();
-    const days  = workDaysInWeek(ref);
-    const p     = getPoint();
-    const table = qs("#weekTable");
-    let sum = 0;
-
-    table.innerHTML = `
-        <thead><tr>
-            <th>Jour</th><th>Arrivée</th><th>Pause</th><th>Départ</th><th>Temps effectif</th>
-        </tr></thead><tbody></tbody>
-        <tfoot><tr><th colspan="4">Total semaine (jours ouvrés)</th><th id="weekTotal"></th></tr></tfoot>`;
-
-    const tbody = table.querySelector("tbody");
-
-    days.forEach(d => {
-        const r    = p[d] || {};
-        const min  = r.total || 0;
-        const holiday = holidayLabel(d);
-        sum += min;
-
-        const tr = document.createElement("tr");
-        if (holiday) tr.className = "row-holiday";
-
-        tr.innerHTML = `
-            <td style="font-weight:600;">${fmtFR(d)} ${holiday ? `<span class="holiday-badge" title="${escapeHtml(holiday)}">🎌 Férié</span>` : ""}</td>
-            <td class="mono">${escapeHtml(r.arrivee)   || "—"}</td>
-            <td class="mono">${escapeHtml(r.pauseDebut) || "—"} – ${escapeHtml(r.pauseFin) || "—"}</td>
-            <td class="mono">${escapeHtml(r.depart)    || "—"}</td>
-            <td class="time-mono ${min >= 420 ? "total-positive" : min > 0 ? "" : ""}">${min ? hm(min) : "—"}</td>`;
-        tbody.appendChild(tr);
-    });
-
-    const totalEl = table.querySelector("#weekTotal");
-    if (totalEl) {
-        totalEl.className = "time-mono " + (sum >= 2100 ? "total-positive" : sum > 0 ? "" : "");
-        totalEl.textContent = sum ? hm(sum) : "—";
-    }
-
-    renderWeekKPI();
-}
-
-function renderMonth() {
-    const ref   = refMoisValide();
-    if (!ref) return;
-    const [Y, M] = ref.split("-").map(Number);
-    const last  = new Date(Y, M, 0).getDate();
-    const p     = getPoint();
-    const table = qs("#monthTable");
-    let sum = 0, workableDays = 0, pointedDays = 0, workableEcoules = 0;
-    const aujourdhui = ymd(new Date());
-
-    table.innerHTML = `
-        <thead><tr>
-            <th>Date</th><th>Arrivée</th><th>Pause</th><th>Départ</th><th>Temps effectif</th>
-        </tr></thead><tbody></tbody>
-        <tfoot><tr><th colspan="4">Total mois (jours ouvrés)</th><th id="monthTotal"></th></tr></tfoot>`;
-
-    const tbody = table.querySelector("tbody");
-
-    for (let d = 1; d <= last; d++) {
-        const key  = `${Y}-${String(M).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-        if (isWeekendDate(key)) continue; // week-ends masqués
-
-        const r    = p[key] || {};
-        const min  = r.total || 0;
-        const holiday = holidayLabel(key);
-        sum += min;
-        if (r.total) pointedDays++;
-        if (!holiday) {
-            workableDays++;
-            // Les jours à venir ne doivent pas peser dans l'objectif :
-            // sinon le 2 du mois affiche 5 % et l'indicateur ne veut rien dire.
-            if (key <= aujourdhui) workableEcoules++;
-        }
-
-        const tr = document.createElement("tr");
-        if (holiday) tr.className = "row-holiday";
-
-        tr.innerHTML = `
-            <td style="font-weight:600;">${fmtFR(key)} ${holiday ? `<span class="holiday-badge" title="${escapeHtml(holiday)}">🎌 Férié</span>` : ""}</td>
-            <td class="mono">${escapeHtml(r.arrivee)    || "—"}</td>
-            <td class="mono">${escapeHtml(r.pauseDebut) || "—"} – ${escapeHtml(r.pauseFin) || "—"}</td>
-            <td class="mono">${escapeHtml(r.depart)     || "—"}</td>
-            <td class="time-mono">${min ? hm(min) : "—"}</td>`;
-        tbody.appendChild(tr);
-    }
-
-    const totalEl = table.querySelector("#monthTotal");
-    if (totalEl) totalEl.textContent = sum ? hm(sum) : "—";
-
-    const monthKpiEl = qs("#monthKPI");
-    if (monthKpiEl) {
-        const moisEnCours = ref === aujourdhui.slice(0, 7);
-        const base   = moisEnCours ? workableEcoules : workableDays;
-        const target = base * getObjectifJour();
-        const pct    = target ? Math.min(100, Math.round((sum / target) * 100)) : 0;
-        const restant = (workableDays - base);
-
-        monthKpiEl.innerHTML = `
-            <div class="kpi-box"><div class="kpi-val cyan">${hm(sum)}</div><div class="kpi-label">Total mois</div></div>
-            <div class="kpi-box"><div class="kpi-val">${pointedDays}/${base}</div><div class="kpi-label">Jours pointés${moisEnCours ? " à ce jour" : " (hors fériés)"}</div></div>
-            <div class="kpi-box"><div class="kpi-val ${pct >= 100 ? "green" : pct >= 80 ? "accent" : "red"}">${pct}%</div><div class="kpi-label">Objectif${moisEnCours ? " à ce jour" : " mois"}</div></div>
-            ${moisEnCours && restant > 0 ? `<div class="kpi-box"><div class="kpi-val">${restant}</div><div class="kpi-label">Jours ouvrés restants</div></div>` : ""}
-        `;
-    }
-}
-
-function shiftWeek(n) {
-    const d = parseYMD(refSemaineValide());
-    d.setDate(d.getDate() + n);
-    qs("#weekRef").value = ymd(d);
-    renderWeek();
-}
-
-function shiftMonth(n) {
-    const [y, m] = refMoisValide().split("-").map(Number);
-    const d = new Date(y, m - 1 + n, 1);
-    qs("#monthRef").value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    renderMonth();
-}
-
-/* Export PDF pointage */
-function exportPointagePdf(mode) {
-    const { jsPDF } = window.jspdf || {};
-    if (!jsPDF) return toast("jsPDF manquant", "", "error");
-
-    const pdf   = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pageH = pdf.internal.pageSize.getHeight();
-    let y = 22;
-
-    const title = mode === "week" ? "Pointage — Semaine" : "Pointage — Mois";
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(14);
-    pdf.text(title, 10, y); y += 10;
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(10);
-
-    const p    = getPoint();
-    const rows = mode === "week"
-        ? workDaysInWeek(refSemaineValide()).map(d => [d, p[d] || {}])
-        : (() => {
-            const ref = refMoisValide();
-            const [Y, M] = ref.split("-").map(Number);
-            const last = new Date(Y, M, 0).getDate();
-            return Array.from({ length: last }, (_, i) => {
-                const key = `${Y}-${String(M).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
-                return [key, p[key] || {}];
-            }).filter(([key]) => !isWeekendDate(key));
-        })();
-
-    let sum = 0;
-    pdf.setFont("helvetica", "bold");
-    pdf.text("Date                    Arrivée  Pause          Départ  Total", 10, y); y += 7;
-    pdf.setFont("helvetica", "normal");
-
-    rows.forEach(([d, r]) => {
-        if (y > pageH - 15) { pdf.addPage(); y = 20; }
-        const min = r.total || 0;
-        const holiday = holidayLabel(d);
-        sum += min;
-        if (holiday) pdf.setTextColor(190, 140, 0); else pdf.setTextColor(0, 0, 0);
-        pdf.text(
-            `${(fmtFR(d) + (holiday ? "  [Férié]" : "")).padEnd(32)} ${(r.arrivee || "--:--").padEnd(9)} ${(r.pauseDebut || "--:--")} – ${(r.pauseFin || "--:--").padEnd(6)} ${(r.depart || "--:--").padEnd(8)} ${hm(min)}`,
-            10, y
-        );
-        y += 6;
-    });
-    pdf.setTextColor(0, 0, 0);
-
-    y += 4;
-    pdf.setFont("helvetica", "bold");
-    pdf.text(`Total (jours ouvrés) : ${hm(sum)}`, 10, y);
-
-    pdf.save(`pointage_${mode}.pdf`);
-    toast("Export PDF réussi", `pointage_${mode}.pdf`, "success");
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1893,14 +1610,6 @@ function exportRapportAlternancePdf() {
     }
 
     /* ── Synthèse KPI ── */
-    // Heures réellement pointées sur la période : un rapport d'alternance est
-    // attendu avec le temps de présence, pas seulement le détail des tâches.
-    const point = getPoint();
-    let minutesPointees = 0, joursPointes = 0;
-    Object.keys(point).filter(d => d >= start && d <= end).forEach(d => {
-        const m = point[d].total || 0;
-        if (m > 0) { minutesPointees += m; joursPointes++; }
-    });
 
     checkPage(28);
     pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
@@ -1910,10 +1619,6 @@ function exportRapportAlternancePdf() {
     pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
     pdf.text(`Activités détaillées : ${hm(totalMin)}   ·   Tâches : ${tasks.length}   ·   Jours actifs : ${dates.length}`, margin, y);
     y += 5.5;
-    if (joursPointes) {
-        pdf.text(`Temps de présence pointé : ${hm(minutesPointees)} sur ${joursPointes} journée(s)`, margin, y);
-        y += 5.5;
-    }
     y += 4;
 
     /* ── Répartition par catégorie ── */
@@ -1990,72 +1695,27 @@ function exportRapportAlternancePdf() {
    RÉGLAGES
 ═══════════════════════════════════════════════════════ */
 function initAdmin() {
-    const wh = getWorkHours();
-    qs("#admWorkStart").value = wh.start;
-    qs("#admWorkEnd").value   = wh.end;
-
     renderAdmCats();
-
-    qs("#saveWorkHoursBtn").onclick = () => {
-        const s = qs("#admWorkStart").value;
-        const e = qs("#admWorkEnd").value;
-        if (!s || !e || parseHM(s) >= parseHM(e)) {
-            return toast("Horaires invalides", "L'heure de fin doit suivre l'heure de début.", "warn");
-        }
-        setWorkHours(s, e);
-        toast("Horaires mis à jour", `${s} – ${e}`, "success");
-    };
-
-    qs("#resetWorkHoursBtn").onclick = () => {
-        try { localStorage.removeItem(LS_WORKHOURS); } catch { /* ignoré */ }
-        const def = getWorkHours();
-        qs("#admWorkStart").value = def.start;
-        qs("#admWorkEnd").value   = def.end;
-        toast("Réinitialisé", "08:00 – 18:00", "info");
-    };
-
-    /* ── Contrat : objectif quotidien et tolérance ── */
-    const appliquerContratDansFormulaire = () => {
-        const c = getContrat();
-        qs("#admObjectif").value  = hm(c.objectifJourMin);
-        qs("#admTolerance").value = c.toleranceMin;
-        majTexteCalcul();
-    };
-    appliquerContratDansFormulaire();
-
-    qs("#saveContratBtn").onclick = () => {
-        const objectif  = parseHM(qs("#admObjectif").value);
-        const tolerance = parseInt(qs("#admTolerance").value, 10);
-        if (isNaN(objectif) || objectif <= 0) return toast("Objectif invalide", "Indiquez une durée, par exemple 07:48.", "warn");
-        if (isNaN(tolerance) || tolerance < 0 || tolerance > 120) return toast("Tolérance invalide", "Entre 0 et 120 minutes.", "warn");
-        if (tolerance >= objectif) return toast("Valeurs incohérentes", "La tolérance doit rester inférieure à l'objectif.", "warn");
-
-        const ancienneTolerance = getContrat().toleranceMin;
-        setContrat({ objectifJourMin: objectif, toleranceMin: tolerance });
-        const reprises = recalculerTotauxPointage(ancienneTolerance, tolerance);
-
-        majTexteCalcul();
-        renderWeek(); renderMonth(); renderWeekKPI(); renderToday();
-        toast(
-            "Contrat enregistré",
-            `${hm(objectif)} par jour · ${tolerance} min de tolérance` +
-            (reprises ? ` — ${reprises} journée(s) recalculée(s) avec la nouvelle tolérance.` : ""),
-            "success", reprises ? 7000 : 3800
-        );
-    };
-
-    qs("#resetContratBtn").onclick = () => {
-        try { localStorage.removeItem(LS_CONTRAT); } catch { /* ignoré */ }
-        appliquerContratDansFormulaire();
-        renderWeek(); renderMonth(); renderWeekKPI();
-        toast("Contrat réinitialisé", "7h48 par jour · 20 min de tolérance", "info");
-    };
 
     qs("#exportBackupBtn").onclick = exportBackupFile;
     qs("#importBackupBtn").onclick = importBackupFile;
     qs("#exportJournalCsvBtn").onclick  = exportJournalCsv;
     qs("#exportPointageCsvBtn").onclick = exportPointageCsv;
     majEtatSauvegarde();
+    majEtatArchives();
+}
+
+/* Les données de pointage ne sont plus exploitées par l'application, mais elles
+   existent encore en base et voyagent dans chaque sauvegarde. On le dit, et on
+   laisse un moyen de les récupérer, plutôt que de les faire disparaître en silence. */
+function majEtatArchives() {
+    const el = qs("#archiveStatus");
+    if (!el) return;
+    const n = Object.keys(getPoint()).length;
+    el.textContent = n
+        ? `${n} journée(s) de pointage conservées. Elles ne sont plus utilisées par l'application, mais restent incluses dans vos sauvegardes et exportables en CSV.`
+        : "Aucune donnée de pointage archivée.";
+    qs("#exportPointageCsvBtn")?.classList.toggle("hidden", !n);
 }
 
 function renderAdmCats() {
@@ -2216,12 +1876,17 @@ function exportPointageCsv() {
 }
 
 /* ── Backup ──────────────────────────────────────────── */
+/* Les clés du pointage (pointage, contrat, workHours) ne sont plus lues par
+   l'interface mais restent transportées dans chaque export : les 67 journées
+   déjà saisies ne doivent pas disparaître parce qu'un écran a été retiré. */
 function buildBackupObject() {
     return {
         cats: getCats(), journal: getJournal(),
-        pointage: getPoint(), sort: getSortOrder(),
+        sujets: typeof getSujets === "function" ? getSujets() : undefined,
+        sort: getSortOrder(),
+        pointage: getPoint(),
         workHours: getWorkHours(),
-        contrat: getContrat(),   // sans quoi l'objectif et la tolérance étaient perdus à la restauration
+        contrat: getContrat(),
         date: new Date().toISOString()
     };
 }
@@ -2281,11 +1946,23 @@ function analyserSauvegarde(obj) {
         return { valide: false, raison: "Le fichier ne contient pas d'objet de sauvegarde." };
     }
     const estDico = v => v && typeof v === "object" && !Array.isArray(v);
-    if (!estDico(obj.journal) || !estDico(obj.pointage)) {
-        return { valide: false, raison: "Les sections « journal » et « pointage » sont absentes ou illisibles." };
+    if (!estDico(obj.journal)) {
+        return { valide: false, raison: "La section « journal » est absente ou illisible." };
+    }
+    // Le pointage n'est plus exigé : une sauvegarde produite après son retrait
+    // n'en contient pas. Absent, il est traité comme vide — et non comme une erreur.
+    if (obj.pointage !== undefined && !estDico(obj.pointage)) {
+        return { valide: false, raison: "La section « pointage » est présente mais illisible." };
     }
 
-    const estDate = k => /^\d{4}-\d{2}-\d{2}$/.test(k);
+    /* Contrôle calendaire, pas seulement structurel : « 2026-13-99 » a la bonne
+       forme mais n'existe pas, et se propagerait dans les comparaisons de dates. */
+    const estDate = k => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return false;
+        const [a, m, j] = k.split("-").map(Number);
+        if (m < 1 || m > 12 || j < 1) return false;
+        return j <= new Date(a, m, 0).getDate();
+    };
     let ignores = 0, taches = 0;
 
     const journal = {};
@@ -2309,7 +1986,7 @@ function analyserSauvegarde(obj) {
     const heureSure = v => (typeof v === "string" && /^([01]?\d|2[0-3]):[0-5]\d$/.test(v.trim())) ? v.trim() : "";
 
     const pointage = {};
-    Object.keys(obj.pointage).forEach(jour => {
+    Object.keys(obj.pointage || {}).forEach(jour => {
         const p = obj.pointage[jour];
         if (!estDate(jour) || !estDico(p)) { ignores++; return; }
         const nettoye = {
@@ -2322,6 +1999,29 @@ function analyserSauvegarde(obj) {
         if (["arrivee","pauseDebut","pauseFin","depart"].some(k => p[k] && !nettoye[k])) ignores++;
         pointage[jour] = nettoye;
     });
+
+    /* Sujets (v2) : un fichier antérieur n'en a pas, on le laisse à null et la
+       migration les reconstruira depuis les catégories et le journal. */
+    const estDateOuVide = v => v === "" || (typeof v === "string" && estDate(v));
+    const sujets = Array.isArray(obj.sujets)
+        ? obj.sujets
+            .filter(s => s && typeof s === "object" && typeof s.nom === "string" && s.nom.trim())
+            .map(s => ({
+                nom:    s.nom.trim(),
+                actif:  s.actif !== false,
+                debut:  estDateOuVide(s.debut) ? s.debut : "",
+                fin:    estDateOuVide(s.fin)   ? s.fin   : "",
+                jalons: Array.isArray(s.jalons)
+                    ? s.jalons
+                        .filter(j => j && typeof j === "object" && typeof j.t === "string" && j.t.trim())
+                        .map(j => ({
+                            t: j.t.trim(),
+                            e: estDateOuVide(j.e) ? j.e : "",
+                            f: estDateOuVide(j.f) ? j.f : ""
+                        }))
+                    : []
+            }))
+        : null;
 
     const contrat = (obj.contrat && Number.isFinite(obj.contrat.objectifJourMin) && Number.isFinite(obj.contrat.toleranceMin)
         && obj.contrat.objectifJourMin > 0 && obj.contrat.toleranceMin >= 0)
@@ -2337,7 +2037,7 @@ function analyserSauvegarde(obj) {
         jours: Object.keys(journal).length,
         pointages: Object.keys(pointage).length,
         propre: {
-            journal, pointage, cats, contrat,
+            journal, pointage, cats, contrat, sujets,
             sort: obj.sort === "asc" ? "asc" : "desc",
             workHours: (obj.workHours && !isNaN(parseHM(obj.workHours.start)) && !isNaN(parseHM(obj.workHours.end)))
                 ? obj.workHours : null,
@@ -2358,7 +2058,6 @@ function applyBackup(obj, bilan) {
     if (d.contrat) setContrat(d.contrat);
 
     initJournal();
-    initPointage();
     initToday();      // la vue du jour affichait sinon les données d'avant l'import
     initAdmin();
 
