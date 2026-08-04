@@ -366,6 +366,69 @@ function statsSujet(nom, journal) {
     };
 }
 
+/* ═══════════════════════════════════════════════════════
+   DIFFICULTÉS
+
+   La rubrique « difficultés rencontrées » est attendue dans tout rapport
+   d'alternance, et c'est la seule chose qu'un journal ne peut pas déduire :
+   une tâche qui a pris trois jours au lieu d'un ne dit pas POURQUOI.
+   On stocke donc l'irréductible — l'énoncé, la gravité, ce qui a débloqué —
+   et on dérive tout le reste (délai de résolution, taux, répartition).
+
+   `projet` est un nom de sujet, comme `cat` dans le journal : pas d'identifiant,
+   pour la même raison qu'ailleurs — un nom se relit dans le JSON.
+   Un projet supprimé ne casse rien : la difficulté devient simplement orpheline.
+═══════════════════════════════════════════════════════ */
+const LS_DIFFS = "jb_difficultes";
+
+/* Trois niveaux, et pas plus : au-delà, personne ne choisit de façon stable.
+   L'ordre compte — il sert au tri et au calcul de la gravité dominante. */
+const GRAVITES = [
+    { cle: "bloquant", libelle: "Bloquant", rang: 3 },
+    { cle: "genant",   libelle: "Gênant",   rang: 2 },
+    { cle: "mineur",   libelle: "Mineur",   rang: 1 }
+];
+const graviteValide = g => GRAVITES.some(x => x.cle === g) ? g : "genant";
+const libelleGravite = g => (GRAVITES.find(x => x.cle === graviteValide(g)) || GRAVITES[1]).libelle;
+
+function getDifficultes() {
+    const v = lireJSON(LS_DIFFS, null);
+    if (!v || !Array.isArray(v.liste)) return [];
+    return v.liste.filter(d => d && typeof d.texte === "string" && d.texte.trim());
+}
+
+const setDifficultes = liste => ecrireJSON(LS_DIFFS, { v: 1, liste });
+
+function ajouterDifficulte({ texte, projet, gravite, date }) {
+    const liste = getDifficultes();
+    liste.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        date:    date || ymd(new Date()),
+        texte:   String(texte || "").trim(),
+        projet:  String(projet || "").trim(),
+        gravite: graviteValide(gravite),
+        resolue: "",          // date de résolution, "" tant qu'elle est ouverte
+        resolution: ""        // ce qui a débloqué — le plus utile à la relecture
+    });
+    return setDifficultes(liste) ? liste[liste.length - 1] : null;
+}
+
+function majDifficulte(id, modif) {
+    const liste = getDifficultes();
+    const i = liste.findIndex(d => d.id === id);
+    if (i < 0) return false;
+    liste[i] = { ...liste[i], ...modif };
+    return setDifficultes(liste);
+}
+
+function supprimerDifficulte(id) {
+    const liste = getDifficultes();
+    const i = liste.findIndex(d => d.id === id);
+    if (i < 0) return null;
+    const [ote] = liste.splice(i, 1);
+    return setDifficultes(liste) ? ote : null;
+}
+
 /* ── Navigation ──────────────────────────────────────── */
 function show(view) {
     qsa("section").forEach(s => s.classList.add("hidden"));
@@ -474,12 +537,14 @@ document.addEventListener("DOMContentLoaded", () => {
     qs("#tab-today").onclick    = () => { show("today"); renderToday(); };
     qs("#tab-journal").onclick  = () => show("journal");
     qs("#tab-projets").onclick  = () => { show("projets"); renderProjets(); };
+    qs("#tab-bilan").onclick    = () => { show("bilan"); renderBilan(); };
     qs("#tab-admin").onclick    = () => { show("admin"); initAdmin(); };
 
     // L'application s'ouvre sur la journée en cours
     initJournal();
     initToday();
     initProjets();
+    initBilan();
     show("today");
 
     appliquerRaccourciPWA();
@@ -923,6 +988,10 @@ function initRaccourcisClavier() {
             if (e.key === "Escape") return closeQuickAdd();
             return piegerFocusModale(e);
         }
+        /* La feuille de saisie du Bilan gère elle-même Échap et la tabulation ;
+           sans cette garde, une frappe sur un de ses boutons déclencherait
+           les raccourcis d'un seul caractère ci-dessous. */
+        if (typeof feuilleEstOuverte === "function" && feuilleEstOuverte()) return;
 
         const cible = e.target;
         const dansUnChamp = cible && (/^(INPUT|TEXTAREA|SELECT)$/.test(cible.tagName) || cible.isContentEditable);
@@ -933,7 +1002,8 @@ function initRaccourcisClavier() {
             case "1": show("today"); renderToday(); break;
             case "2": show("journal"); break;
             case "3": show("projets"); renderProjets(); break;
-            case "4": show("admin"); initAdmin(); break;
+            case "4": show("bilan"); renderBilan(); break;
+            case "5": show("admin"); initAdmin(); break;
             case "/": e.preventDefault(); show("journal"); qs("#searchText").focus(); break;
             case "?": afficherAideRaccourcis(); break;
         }
@@ -943,7 +1013,7 @@ function initRaccourcisClavier() {
 function afficherAideRaccourcis() {
     toast(
         "Raccourcis clavier",
-        "A : ajout rapide · / : rechercher · 1 : Aujourd'hui · 2 : Historique · 3 : Pointage · 4 : Réglages · Échap : fermer",
+        "A : ajout rapide · / : rechercher · 1 : Aujourd'hui · 2 : Historique · 3 : Projets · 4 : Bilan · 5 : Réglages · Échap : fermer",
         "info", 8000
     );
 }
@@ -1680,6 +1750,63 @@ function exportRapportAlternancePdf() {
         pdf.splitTextToSize(bilan, pageW - margin * 2).forEach(line => { checkPage(6); pdf.text(line, margin, y); y += 5.5; });
     }
 
+    /* ── Avancement et difficultés ──
+       Un rapport d'alternance qui ne dit que « ce que j'ai fait » est
+       incomplet : le tuteur attend où en sont les projets et ce qui a
+       coincé. Ces deux sections viennent du Bilan, donc des mêmes
+       chiffres que ceux affichés à l'écran. */
+    if (typeof calculerBilan === "function") {
+        const bil = calculerBilan(null);
+        const av = bil.avancement, ret = bil.retards;
+
+        if (av.totalJalons) {
+            checkPage(20);
+            pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
+            pdf.setTextColor(31, 92, 155);
+            pdf.text("Avancement des projets", margin, y); y += 7;
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+            pdf.text(`Avancement global : ${av.avancementGlobal} %  (${av.totalFaits}/${av.totalJalons} jalons)` +
+                     (ret.taux === null ? "" : `   ·   taux de retard ${ret.taux} %`), margin, y);
+            y += 6;
+            pdf.setFontSize(9.5);
+            av.projets.filter(p => p.jalons).forEach(p => {
+                checkPage(6);
+                pdf.text(`${p.nom} — ${p.avancement} % (${p.faits}/${p.jalons})` +
+                         (p.jalonsEnRetard ? `, ${p.jalonsEnRetard} jalon(s) en retard` : ""), margin + 4, y);
+                y += 5.2;
+            });
+            y += 4;
+        }
+
+        const diffs = bil.difficultes.liste;
+        if (diffs.length) {
+            checkPage(20);
+            pdf.setFont("helvetica", "bold"); pdf.setFontSize(12);
+            pdf.setTextColor(31, 92, 155);
+            pdf.text("Difficultés rencontrées", margin, y); y += 7;
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont("helvetica", "normal"); pdf.setFontSize(9.5);
+            diffs.forEach(x => {
+                checkPage(10);
+                pdf.setFont("helvetica", "bold");
+                pdf.text(`[${libelleGravite(x.gravite)}] ${x.resolue ? "Résolue" : "Ouverte"}` +
+                         (x.projet ? ` — ${x.projet}` : ""), margin, y);
+                pdf.setFont("helvetica", "normal");
+                y += 4.8;
+                pdf.splitTextToSize(x.texte, pageW - margin * 2 - 4)
+                   .forEach(l => { checkPage(5); pdf.text(l, margin + 4, y); y += 4.6; });
+                if (x.resolution) {
+                    pdf.setTextColor(90, 95, 100);
+                    pdf.splitTextToSize("Solution : " + x.resolution, pageW - margin * 2 - 4)
+                       .forEach(l => { checkPage(5); pdf.text(l, margin + 4, y); y += 4.6; });
+                    pdf.setTextColor(0, 0, 0);
+                }
+                y += 2.5;
+            });
+        }
+    }
+
     /* ── Pied de page ── */
     const pageCount = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
@@ -1691,7 +1818,7 @@ function exportRapportAlternancePdf() {
     }
 
     pdf.save(`rapport_alternance_${start}_${end}.pdf`);
-    toast("Rapport généré ✅", `rapport_alternance_${start}_${end}.pdf`, "success");
+    toast("Rapport généré", `rapport_alternance_${start}_${end}.pdf`, "success");
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1886,6 +2013,7 @@ function buildBackupObject() {
     return {
         cats: getCats(), journal: getJournal(),
         sujets: typeof getSujets === "function" ? getSujets() : undefined,
+        difficultes: typeof getDifficultes === "function" ? getDifficultes() : undefined,
         sort: getSortOrder(),
         pointage: getPoint(),
         workHours: getWorkHours(),
@@ -2026,6 +2154,23 @@ function analyserSauvegarde(obj) {
             }))
         : null;
 
+    /* Difficultés : absentes d'un fichier antérieur, ce qui n'est pas une erreur.
+       null signifie « le fichier n'en parle pas », à distinguer de [] qui veut
+       dire « le fichier dit qu'il n'y en a aucune » — seul le second écrase. */
+    const difficultes = Array.isArray(obj.difficultes)
+        ? obj.difficultes
+            .filter(d => d && typeof d === "object" && typeof d.texte === "string" && d.texte.trim())
+            .map((d, i) => ({
+                id:      Number.isFinite(d.id) ? d.id : Date.now() + i,
+                date:    estDate(d.date) ? d.date : ymd(new Date()),
+                texte:   d.texte.trim(),
+                projet:  typeof d.projet === "string" ? d.projet.trim() : "",
+                gravite: graviteValide(d.gravite),
+                resolue: estDateOuVide(d.resolue) ? d.resolue : "",
+                resolution: typeof d.resolution === "string" ? d.resolution : ""
+            }))
+        : null;
+
     const contrat = (obj.contrat && Number.isFinite(obj.contrat.objectifJourMin) && Number.isFinite(obj.contrat.toleranceMin)
         && obj.contrat.objectifJourMin > 0 && obj.contrat.toleranceMin >= 0)
         ? { objectifJourMin: obj.contrat.objectifJourMin, toleranceMin: obj.contrat.toleranceMin }
@@ -2039,8 +2184,9 @@ function analyserSauvegarde(obj) {
         valide: true, ignores, taches,
         jours: Object.keys(journal).length,
         pointages: Object.keys(pointage).length,
+        difficultes: difficultes ? difficultes.length : 0,
         propre: {
-            journal, pointage, cats, contrat, sujets,
+            journal, pointage, cats, contrat, sujets, difficultes,
             sort: obj.sort === "asc" ? "asc" : "desc",
             workHours: (obj.workHours && !isNaN(parseHM(obj.workHours.start)) && !isNaN(parseHM(obj.workHours.end)))
                 ? obj.workHours : null,
@@ -2055,21 +2201,42 @@ function applyBackup(obj, bilan) {
 
     const d = bilan.propre;
     if (d.cats) setCats(d.cats);
+
+    /* Les sujets étaient validés à l'import mais jamais réécrits : une
+       restauration repartait donc sans aucune date de projet ni aucun jalon,
+       que la migration reconstruisait vides. L'ordre compte — setSujets écrit
+       jb_cats en miroir, et la migration qui suit rattrape les catégories
+       présentes dans le journal mais absentes des sujets restaurés. */
+    if (d.sujets) setSujets(d.sujets);
+
+    /* null = le fichier ne parle pas de difficultés, on garde les nôtres ;
+       [] = le fichier affirme qu'il n'y en a aucune, on écrase. */
+    if (d.difficultes) setDifficultes(d.difficultes);
+
     const ok = setJournal(d.journal) && setPoint(d.pointage);
     setSortOrder(d.sort);
     if (d.workHours) setWorkHours(d.workHours.start, d.workHours.end);
     if (d.contrat) setContrat(d.contrat);
 
+    migrerVersSujets();
+
     initJournal();
     initToday();      // la vue du jour affichait sinon les données d'avant l'import
     initAdmin();
+    if (typeof renderProjets === "function") renderProjets();
+    if (typeof renderBilan   === "function") renderBilan();
 
     if (!ok) return toast("Restauration incomplète", "Le navigateur a refusé d'enregistrer toutes les données.", "error", 9000);
 
     const quand = d.date && !isNaN(new Date(d.date)) ? ` du ${new Date(d.date).toLocaleDateString("fr-FR")}` : "";
+    const detail = [
+        `${bilan.taches} tâche(s)`,
+        d.sujets ? `${d.sujets.length} projet(s)` : null,
+        bilan.difficultes ? `${bilan.difficultes} difficulté(s)` : null
+    ].filter(Boolean).join(", ");
     toast(
-        "Restauration complète ✅",
-        `Sauvegarde${quand} — ${bilan.taches} tâche(s), ${bilan.pointages} pointage(s)` +
+        "Restauration complète",
+        `Sauvegarde${quand} — ${detail}` +
         (bilan.ignores ? ` · ${bilan.ignores} entrée(s) illisible(s) ignorée(s)` : ""),
         "success"
     );

@@ -53,6 +53,7 @@
         <button id="tab-today"    class="tab active" role="tab" aria-selected="true"  aria-controls="view-today"><span>Aujourd'hui</span></button>
         <button id="tab-journal"  class="tab"        role="tab" aria-selected="false" aria-controls="view-journal"><span>Historique</span></button>
         <button id="tab-projets"  class="tab"        role="tab" aria-selected="false" aria-controls="view-projets"><span>Projets</span></button>
+        <button id="tab-bilan"    class="tab"        role="tab" aria-selected="false" aria-controls="view-bilan"><span>Bilan</span></button>
         <button id="tab-admin"    class="tab"        role="tab" aria-selected="false" aria-controls="view-admin"><span>Réglages</span></button>
       </div>
 
@@ -155,6 +156,28 @@
 
     <div class="section-actions" style="margin-top:16px;">
       <button id="ajouterProjetBtn">Nouveau projet</button>
+    </div>
+  </section>
+
+  <!-- ─── BILAN ───────────────────────────────────────── -->
+  <section id="view-bilan" class="card hidden">
+    <h2>Bilan</h2>
+    <p class="subtitle">Statistiques, avancement, retards et difficultés</p>
+
+    <div class="bilan-barre">
+      <div id="bilanPeriode" class="seg" role="group" aria-label="Période d'observation">
+        <button class="seg-btn actif" data-jours="30" aria-pressed="true">30 jours</button>
+        <button class="seg-btn" data-jours="90" aria-pressed="false">90 jours</button>
+        <button class="seg-btn" data-jours="" aria-pressed="false">Tout</button>
+      </div>
+      <span class="small-hint">L'avancement et les retards portent sur l'ensemble des projets, quelle que soit la période.</span>
+    </div>
+
+    <div id="bilanRoot"></div>
+
+    <div class="section-actions" style="margin-top:16px;">
+      <button id="exportBilanCsvBtn" class="btn-ghost">Exporter le bilan (CSV)</button>
+      <button id="exportRoadmapPdfBtn" class="btn-ghost">Feuille de route (PDF)</button>
     </div>
   </section>
 
@@ -332,6 +355,8 @@
 <script src="app.js"></script>
 <script src="projets.js"></script>
 <script src="gantt.js"></script>
+<script src="bilan.js"></script>
+<script src="bilan-vue.js"></script>
 
 </body>
 </html>
